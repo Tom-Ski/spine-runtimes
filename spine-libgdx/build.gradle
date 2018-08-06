@@ -1,4 +1,8 @@
 apply plugin: "java"
+apply plugin: "maven"
+
+group = "com.github.Tom-Ski"
+version = "0.0.1"
 
 ext {
     libgdxVersion = "1.9.9-SNAPSHOT"
