@@ -1,0 +1,28 @@
+apply plugin: "java"
+
+ext {
+    libgdxVersion = "1.9.9-SNAPSHOT"
+}
+
+sourceSets.main.java.srcDirs = ["spine-libgdx/src"]
+sourceSets.test.java.srcDirs = ["spine-libgdx-tests/src"]
+
+repositories {
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile "com.badlogicgames.gdx:gdx:$libgdxVersion"
+
+    testCompile "com.badlogicgames.gdx:gdx:$libgdxVersion"
+    testCompile "com.badlogicgames.gdx:gdx-backend-lwjgl:$libgdxVersion"
+    testCompile "com.badlogicgames.gdx:gdx-platform:$libgdxVersion:natives-desktop"
+    testCompile "com.badlogicgames.gdx:gdx-box2d:$libgdxVersion"
+    testCompile "com.badlogicgames.gdx:gdx-box2d-platform:$libgdxVersion:natives-desktop"
+
+}
+
