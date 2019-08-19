@@ -32,6 +32,7 @@ package com.esotericsoftware.spine;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.PolygonBatch;
 import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
@@ -61,7 +62,7 @@ public class SkeletonRenderer {
 	private final Color temp5 = new Color();
 	private final Color temp6 = new Color();
 
-	/** Renders the specified skeleton. If the batch is a PolygonSpriteBatch, {@link #draw(PolygonSpriteBatch, Skeleton)} is
+	/** Renders the specified skeleton. If the batch is a PolygonSpriteBatch, {@link #draw(PolygonBatch, Skeleton)} is
 	 * called. If the batch is a TwoColorPolygonBatch, {@link #draw(TwoColorPolygonBatch, Skeleton)} is called. Otherwise the
 	 * skeleton is rendered without two color tinting and any mesh attachments will throw an exception.
 	 * <p>
@@ -73,8 +74,8 @@ public class SkeletonRenderer {
 			draw((TwoColorPolygonBatch)batch, skeleton);
 			return;
 		}
-		if (batch instanceof PolygonSpriteBatch) {
-			draw((PolygonSpriteBatch)batch, skeleton);
+		if (batch instanceof PolygonBatch) {
+			draw((PolygonBatch)batch, skeleton);
 			return;
 		}
 		if (batch == null) throw new IllegalArgumentException("batch cannot be null.");
@@ -150,7 +151,7 @@ public class SkeletonRenderer {
 	 * previous blend function is not restored, since that could result in unnecessary flushes, depending on what is rendered
 	 * next. */
 	@SuppressWarnings("null")
-	public void draw (PolygonSpriteBatch batch, Skeleton skeleton) {
+	public void draw (PolygonBatch batch, Skeleton skeleton) {
 		if (batch == null) throw new IllegalArgumentException("batch cannot be null.");
 		if (skeleton == null) throw new IllegalArgumentException("skeleton cannot be null.");
 
