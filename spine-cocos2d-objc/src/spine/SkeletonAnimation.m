@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #import <spine/SkeletonAnimation.h>
@@ -32,12 +32,12 @@
 #import <spine/extension.h>
 
 typedef struct _TrackEntryListeners {
-    spStartListener startListener;
-    spInterruptListener interruptListener;
-    spEndListener endListener;
-    spDisposeListener disposeListener;
-    spCompleteListener completeListener;
-    spEventListener eventListener;
+	spStartListener startListener;
+	spInterruptListener interruptListener;
+	spEndListener endListener;
+	spDisposeListener disposeListener;
+	spCompleteListener completeListener;
+	spEventListener eventListener;
 } _TrackEntryListeners;
 
 static void animationCallback (spAnimationState* state, spEventType type, spTrackEntry* entry, spEvent* event) {
@@ -46,16 +46,16 @@ static void animationCallback (spAnimationState* state, spEventType type, spTrac
 
 void trackEntryCallback (spAnimationState* state, spEventType type, spTrackEntry* entry, spEvent* event) {
 	[(SkeletonAnimation*)state->rendererObject onTrackEntryEvent:entry type:type event:event];
-    if (type == SP_ANIMATION_DISPOSE) {
-        if (entry->rendererObject) {
-            _TrackEntryListeners* listeners = (_TrackEntryListeners*)entry->rendererObject;
-            [listeners->startListener release];
-            [listeners->endListener release];
-            [listeners->completeListener release];
-            [listeners->eventListener release];
-            FREE(listeners);
-        }
-    }
+	if (type == SP_ANIMATION_DISPOSE) {
+		if (entry->rendererObject) {
+			_TrackEntryListeners* listeners = (_TrackEntryListeners*)entry->rendererObject;
+			[listeners->startListener release];
+			[listeners->endListener release];
+			[listeners->completeListener release];
+			[listeners->eventListener release];
+			FREE(listeners);
+		}
+	}
 }
 
 static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
@@ -80,6 +80,8 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 @synthesize endListener = _endListener;
 @synthesize completeListener = _completeListener;
 @synthesize eventListener = _eventListener;
+@synthesize preUpdateWorldTransformsListener = _preUpdateWorldTransformsListener;
+@synthesize postUpdateWorldTransformsListener = _postUpdateWorldTransformsListener;
 
 + (id) skeletonWithData:(spSkeletonData*)skeletonData ownsSkeletonData:(bool)ownsSkeletonData {
 	return [[[self alloc] initWithData:skeletonData ownsSkeletonData:ownsSkeletonData] autorelease];
@@ -95,7 +97,7 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 
 - (void) initialize {
 	_ownsAnimationStateData = true;
-    _timeScale = 1;
+	_timeScale = 1;
 
 	_state = spAnimationState_create(spAnimationStateData_create(_skeleton->data));
 	_state->rendererObject = self;
@@ -107,27 +109,27 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 - (id) initWithData:(spSkeletonData*)skeletonData ownsSkeletonData:(bool)ownsSkeletonData {
 	self = [super initWithData:skeletonData ownsSkeletonData:ownsSkeletonData];
 	if (!self) return nil;
-	
+
 	[self initialize];
-	
+
 	return self;
 }
 
 - (id) initWithFile:(NSString*)skeletonDataFile atlas:(spAtlas*)atlas scale:(float)scale {
 	self = [super initWithFile:skeletonDataFile atlas:atlas scale:scale];
 	if (!self) return nil;
-	
+
 	[self initialize];
-	
+
 	return self;
 }
 
 - (id) initWithFile:(NSString*)skeletonDataFile atlasFile:(NSString*)atlasFile scale:(float)scale {
 	self = [super initWithFile:skeletonDataFile atlasFile:atlasFile scale:scale];
 	if (!self) return nil;
-	
+
 	[self initialize];
-	
+
 	return self;
 }
 
@@ -136,11 +138,13 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 	spAnimationState_dispose(_state);
 
 	[_startListener release];
-    [_interruptListener release];
+	[_interruptListener release];
 	[_endListener release];
-    [_disposeListener release];
+	[_disposeListener release];
 	[_completeListener release];
 	[_eventListener release];
+	[_preUpdateWorldTransformsListener release];
+	[_postUpdateWorldTransformsListener release];
 
 	[super dealloc];
 }
@@ -150,12 +154,14 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 	spSkeleton_update(_skeleton, deltaTime);
 	spAnimationState_update(_state, deltaTime);
 	spAnimationState_apply(_state, _skeleton);
+	if (_preUpdateWorldTransformsListener) _preUpdateWorldTransformsListener(self);
 	spSkeleton_updateWorldTransform(_skeleton);
+	if (_postUpdateWorldTransformsListener) _postUpdateWorldTransformsListener(self);
 }
 
 - (void) setAnimationStateData:(spAnimationStateData*)stateData {
 	NSAssert(stateData, @"stateData cannot be null.");
-	
+
 	if (_ownsAnimationStateData) spAnimationStateData_dispose(_state->data);
 	spAnimationState_dispose(_state);
 
@@ -204,17 +210,17 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 	case SP_ANIMATION_START:
 		if (_startListener) _startListener(entry);
 		break;
-    case SP_ANIMATION_INTERRUPT:
-        if (_interruptListener) _interruptListener(entry);
-        break;
+	case SP_ANIMATION_INTERRUPT:
+		if (_interruptListener) _interruptListener(entry);
+		break;
 	case SP_ANIMATION_END:
 		if (_endListener) _endListener(entry);
 		break;
-    case SP_ANIMATION_DISPOSE:
-        if (_disposeListener) _disposeListener(entry);
-        break;
+	case SP_ANIMATION_DISPOSE:
+		if (_disposeListener) _disposeListener(entry);
+		break;
 	case SP_ANIMATION_COMPLETE:
-        if (_completeListener) _completeListener(entry);
+		if (_completeListener) _completeListener(entry);
 		break;
 	case SP_ANIMATION_EVENT:
 		if (_eventListener) _eventListener(entry, event);
@@ -229,15 +235,15 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 	case SP_ANIMATION_START:
 		if (listeners->startListener) listeners->startListener(entry);
 		break;
-    case SP_ANIMATION_INTERRUPT:
-        if (listeners->interruptListener) listeners->interruptListener(entry);
-        break;
+	case SP_ANIMATION_INTERRUPT:
+		if (listeners->interruptListener) listeners->interruptListener(entry);
+		break;
 	case SP_ANIMATION_END:
 		if (listeners->endListener) listeners->endListener(entry);
 		break;
-    case SP_ANIMATION_DISPOSE:
-        if (listeners->disposeListener) listeners->disposeListener(entry);
-        break;
+	case SP_ANIMATION_DISPOSE:
+		if (listeners->disposeListener) listeners->disposeListener(entry);
+		break;
 	case SP_ANIMATION_COMPLETE:
 		if (listeners->completeListener) listeners->completeListener(entry);
 		break;
@@ -252,7 +258,7 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 }
 
 - (void) setListenerForEntry:(spTrackEntry*)entry onInterrupt:(spInterruptListener)listener {
-    getListeners(entry)->interruptListener = [listener copy];
+	getListeners(entry)->interruptListener = [listener copy];
 }
 
 - (void) setListenerForEntry:(spTrackEntry*)entry onEnd:(spEndListener)listener {
@@ -260,7 +266,7 @@ static _TrackEntryListeners* getListeners (spTrackEntry* entry) {
 }
 
 - (void) setListenerForEntry:(spTrackEntry*)entry onDispose:(spDisposeListener)listener {
-    getListeners(entry)->disposeListener = [listener copy];
+	getListeners(entry)->disposeListener = [listener copy];
 }
 
 - (void) setListenerForEntry:(spTrackEntry*)entry onComplete:(spCompleteListener)listener {

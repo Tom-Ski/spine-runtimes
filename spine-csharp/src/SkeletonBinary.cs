@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #if (UNITY_5 || UNITY_5_3_OR_NEWER || UNITY_WSA || UNITY_WP8 || UNITY_WP8_1)
@@ -73,7 +73,7 @@ namespace Spine {
 			this.attachmentLoader = attachmentLoader;
 			Scale = 1;
 		}
-			
+
 		#if !ISUNITY && WINDOWS_STOREAPP
 		private async Task<SkeletonData> ReadFile(string path) {
 			var folder = Windows.ApplicationModel.Package.Current.InstalledLocation;
@@ -128,6 +128,8 @@ namespace Spine {
 			if (skeletonData.hash.Length == 0) skeletonData.hash = null;
 			skeletonData.version = input.ReadString();
 			if (skeletonData.version.Length == 0) skeletonData.version = null;
+			if ("3.8.75" == skeletonData.version)
+					throw new Exception("Unsupported skeleton data, please export with a newer version of Spine.");
 			skeletonData.x = input.ReadFloat();
 			skeletonData.y = input.ReadFloat();
 			skeletonData.width = input.ReadFloat();
@@ -160,7 +162,7 @@ namespace Spine {
 				String name = input.ReadString();
 				BoneData parent = i == 0 ? null : skeletonData.bones.Items[input.ReadInt(true)];
 				BoneData data = new BoneData(i, name, parent);
-				data.rotation = input.ReadFloat();		
+				data.rotation = input.ReadFloat();
 				data.x = input.ReadFloat() * scale;
 				data.y = input.ReadFloat() * scale;
 				data.scaleX = input.ReadFloat();
@@ -314,7 +316,7 @@ namespace Spine {
 			o = skeletonData.animations.Resize(n = input.ReadInt(true)).Items;
 			for (int i = 0; i < n; i++)
 				o[i] = ReadAnimation(input.ReadString(), input, skeletonData);
-			
+
 			return skeletonData;
 		}
 
@@ -322,13 +324,19 @@ namespace Spine {
 		/// <returns>May be null.</returns>
 		private Skin ReadSkin (SkeletonInput input, SkeletonData skeletonData, bool defaultSkin, bool nonessential) {
 
-			Skin skin = new Skin(defaultSkin ? "default" : input.ReadStringRef());
+			Skin skin;
+			int slotCount;
 
-			if (!defaultSkin) {
+			if (defaultSkin) {
+				slotCount = input.ReadInt(true);
+				if (slotCount == 0) return null;
+				skin = new Skin("default");
+			} else {
+				skin = new Skin(input.ReadStringRef());
 				Object[] bones = skin.bones.Resize(input.ReadInt(true)).Items;
 				for (int i = 0, n = skin.bones.Count; i < n; i++)
 					bones[i] = skeletonData.bones.Items[input.ReadInt(true)];
-				
+
 				for (int i = 0, n = input.ReadInt(true); i < n; i++)
 					skin.constraints.Add(skeletonData.ikConstraints.Items[input.ReadInt(true)]);
 				for (int i = 0, n = input.ReadInt(true); i < n; i++)
@@ -336,8 +344,9 @@ namespace Spine {
 				for (int i = 0, n = input.ReadInt(true); i < n; i++)
 					skin.constraints.Add(skeletonData.pathConstraints.Items[input.ReadInt(true)]);
 				skin.constraints.TrimExcess();
+				slotCount = input.ReadInt(true);
 			}
-			for (int i = 0, n = input.ReadInt(true); i < n; i++) {
+			for (int i = 0; i < slotCount; i++) {
 				int slotIndex = input.ReadInt(true);
 				for (int ii = 0, nn = input.ReadInt(true); ii < nn; ii++) {
 					String name = input.ReadStringRef();
@@ -360,7 +369,7 @@ namespace Spine {
 			switch (type) {
 			case AttachmentType.Region: {
 					String path = input.ReadStringRef();
-					float rotation = input.ReadFloat();		
+					float rotation = input.ReadFloat();
 					float x = input.ReadFloat();
 					float y = input.ReadFloat();
 					float scaleX = input.ReadFloat();
@@ -391,7 +400,7 @@ namespace Spine {
 					int vertexCount = input.ReadInt(true);
 					Vertices vertices = ReadVertices(input, vertexCount);
 					if (nonessential) input.ReadInt(); //int color = nonessential ? input.ReadInt() : 0; // Avoid unused local warning.
-					
+
 					BoundingBoxAttachment box = attachmentLoader.NewBoundingBoxAttachment(skin, name);
 					if (box == null) return null;
 					box.worldVerticesLength = vertexCount << 1;
@@ -484,7 +493,7 @@ namespace Spine {
 					path.bones = vertices.bones;
 					path.lengths = lengths;
 					// skipped porting: if (nonessential) Color.rgba8888ToColor(path.getColor(), color);
-					return path;                    
+					return path;
 				}
 			case AttachmentType.Point: {
 					float rotation = input.ReadFloat();
@@ -560,7 +569,7 @@ namespace Spine {
 		private int[] ReadShortArray (SkeletonInput input) {
 			int n = input.ReadInt(true);
 			int[] array = new int[n];
-			for (int i = 0; i < n; i++) 
+			for (int i = 0; i < n; i++)
 				array[i] = (input.ReadByte() << 8) | input.ReadByte();
 			return array;
 		}
@@ -719,7 +728,7 @@ namespace Spine {
 								float timelineScale = 1;
 								if (timelineType == PATH_SPACING) {
 									timeline = new PathConstraintSpacingTimeline(frameCount);
-									if (data.spacingMode == SpacingMode.Length || data.spacingMode == SpacingMode.Fixed) timelineScale = scale; 
+									if (data.spacingMode == SpacingMode.Length || data.spacingMode == SpacingMode.Fixed) timelineScale = scale;
 								} else {
 									timeline = new PathConstraintPositionTimeline(frameCount);
 									if (data.positionMode == PositionMode.Fixed) timelineScale = scale;
@@ -874,6 +883,7 @@ namespace Spine {
 
 		internal class SkeletonInput {
 			private byte[] chars = new byte[32];
+			private byte[] bytesBigEndian = new byte[4];
 			internal ExposedList<String> strings;
 			Stream input;
 
@@ -896,15 +906,20 @@ namespace Spine {
 			}
 
 			public float ReadFloat () {
-				chars[3] = (byte)input.ReadByte();
-				chars[2] = (byte)input.ReadByte();
-				chars[1] = (byte)input.ReadByte();
-				chars[0] = (byte)input.ReadByte();
+				input.Read(bytesBigEndian, 0, 4);
+				chars[3] = bytesBigEndian[0];
+				chars[2] = bytesBigEndian[1];
+				chars[1] = bytesBigEndian[2];
+				chars[0] = bytesBigEndian[3];
 				return BitConverter.ToSingle(chars, 0);
 			}
 
 			public int ReadInt () {
-				return (input.ReadByte() << 24) + (input.ReadByte() << 16) + (input.ReadByte() << 8) + input.ReadByte();
+				input.Read(bytesBigEndian, 0, 4);
+				return (bytesBigEndian[0] << 24)
+					+ (bytesBigEndian[1] << 16)
+					+ (bytesBigEndian[2] << 8)
+					+ bytesBigEndian[3];
 			}
 
 			public int ReadInt (bool optimizePositive) {

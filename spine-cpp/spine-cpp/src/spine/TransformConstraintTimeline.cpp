@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #ifdef SPINE_UE4
@@ -59,7 +59,8 @@ const int TransformConstraintTimeline::SCALE = 3;
 const int TransformConstraintTimeline::SHEAR = 4;
 
 TransformConstraintTimeline::TransformConstraintTimeline(int frameCount) : CurveTimeline(frameCount),
-																		   _transformConstraintIndex(0) {
+	_transformConstraintIndex(0)
+{
 	_frames.setSize(frameCount * ENTRIES, 0);
 }
 
@@ -75,20 +76,20 @@ void TransformConstraintTimeline::apply(Skeleton &skeleton, float lastTime, floa
 
 	if (time < _frames[0]) {
 		switch (blend) {
-			case MixBlend_Setup:
-				constraint._rotateMix = constraint._data._rotateMix;
-				constraint._translateMix = constraint._data._translateMix;
-				constraint._scaleMix = constraint._data._scaleMix;
-				constraint._shearMix = constraint._data._shearMix;
-				return;
-			case MixBlend_First:
-				constraint._rotateMix += (constraint._data._rotateMix - constraint._rotateMix) * alpha;
-				constraint._translateMix += (constraint._data._translateMix - constraint._translateMix) * alpha;
-				constraint._scaleMix += (constraint._data._scaleMix - constraint._scaleMix) * alpha;
-				constraint._shearMix += (constraint._data._shearMix - constraint._shearMix) * alpha;
-				return;
-			default:
-				return;
+		case MixBlend_Setup:
+			constraint._rotateMix = constraint._data._rotateMix;
+			constraint._translateMix = constraint._data._translateMix;
+			constraint._scaleMix = constraint._data._scaleMix;
+			constraint._shearMix = constraint._data._shearMix;
+			return;
+		case MixBlend_First:
+			constraint._rotateMix += (constraint._data._rotateMix - constraint._rotateMix) * alpha;
+			constraint._translateMix += (constraint._data._translateMix - constraint._translateMix) * alpha;
+			constraint._scaleMix += (constraint._data._scaleMix - constraint._scaleMix) * alpha;
+			constraint._shearMix += (constraint._data._shearMix - constraint._shearMix) * alpha;
+			return;
+		default:
+			return;
 		}
 	}
 
@@ -109,7 +110,7 @@ void TransformConstraintTimeline::apply(Skeleton &skeleton, float lastTime, floa
 		shear = _frames[frame + PREV_SHEAR];
 		float frameTime = _frames[frame];
 		float percent = getCurvePercent(frame / ENTRIES - 1,
-										1 - (time - frameTime) / (_frames[frame + PREV_TIME] - frameTime));
+			1 - (time - frameTime) / (_frames[frame + PREV_TIME] - frameTime));
 
 		rotate += (_frames[frame + ROTATE] - rotate) * percent;
 		translate += (_frames[frame + TRANSLATE] - translate) * percent;
@@ -135,9 +136,9 @@ int TransformConstraintTimeline::getPropertyId() {
 	return ((int) TimelineType_TransformConstraint << 24) + _transformConstraintIndex;
 }
 
-void
-TransformConstraintTimeline::setFrame(size_t frameIndex, float time, float rotateMix, float translateMix, float scaleMix,
-									  float shearMix) {
+void TransformConstraintTimeline::setFrame(size_t frameIndex, float time, float rotateMix, float translateMix, float scaleMix,
+	float shearMix
+) {
 	frameIndex *= ENTRIES;
 	_frames[frameIndex] = time;
 	_frames[frameIndex + ROTATE] = rotateMix;

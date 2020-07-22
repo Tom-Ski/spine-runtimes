@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 -- Spine Runtimes License Agreement
--- Last updated May 1, 2019. Replaces all prior versions.
+-- Last updated January 1, 2020. Replaces all prior versions.
 --
--- Copyright (c) 2013-2019, Esoteric Software LLC
+-- Copyright (c) 2013-2020, Esoteric Software LLC
 --
 -- Integration of the Spine Runtimes into software or otherwise creating
 -- derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
 -- Spine Editor license and redistribution of the Products in any form must
 -- include this license and copyright notice.
 --
--- THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
--- OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
--- OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
--- NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
--- INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
--- BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
--- INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
--- THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
--- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
--- EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-- THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-- DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+-- DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+-- BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+-- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+-- THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -------------------------------------------------------------------------------
 
 local setmetatable = setmetatable
@@ -55,7 +55,7 @@ function TransformConstraint.new (data, skeleton)
 		target = nil,
 		rotateMix = data.rotateMix, translateMix = data.translateMix, scaleMix = data.scaleMix, shearMix = data.shearMix,
 		temp = { 0, 0 },
-    active = false
+		active = false
 	}
 	setmetatable(self, TransformConstraint)
 
@@ -169,7 +169,7 @@ function TransformConstraint:applyAbsoluteWorld ()
 			bone.d = math_sin(r) * s
 			modified = true
 		end
-		
+
 		if modified then bone.appliedValid = false end
 	end
 end
@@ -191,7 +191,7 @@ function TransformConstraint:applyRelativeWorld ()
 	local bones = self.bones
 	for _, bone in ipairs(bones) do
 		local modified = false
-		
+
 		if rotateMix ~= 0 then
 			local a = bone.a
 			local b = bone.b
@@ -248,7 +248,7 @@ function TransformConstraint:applyRelativeWorld ()
 			bone.d = math_sin(r) * s
 			modified = true
 		end
-		
+
 		if modified then bone.appliedValid = false end
 	end
 end
@@ -264,7 +264,7 @@ function TransformConstraint:applyAbsoluteLocal ()
 	for _, bone in ipairs(bones) do
 		local modified = false
 		if not bone.appliedValid then bone:updateAppliedTransform() end
-		
+
 		local rotation = bone.arotation
 		if rotateMix ~= 0 then
 			local r = target.arotation - rotation + self.data.offsetRotation
@@ -305,7 +305,7 @@ function TransformConstraint:applyRelativeLocal ()
 	local rotateMix = self.rotateMix
 	local translateMix = self.translateMix
 	local scaleMix = self.scaleMix
-	local shearMix = self.shearMix	
+	local shearMix = self.shearMix
 	local target = self.target
 	if not target.appliedValid then target:updateAppliedTransform() end
 	local bones = self.bones

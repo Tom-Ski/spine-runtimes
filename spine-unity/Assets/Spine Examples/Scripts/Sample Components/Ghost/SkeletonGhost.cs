@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 // Contributed by: Mitch Thompson
@@ -33,7 +33,7 @@ using UnityEngine;
 using System.Collections.Generic;
 
 namespace Spine.Unity.Examples {
-	
+
 	[RequireComponent(typeof(SkeletonRenderer))]
 	public class SkeletonGhost : MonoBehaviour {
 		// Internal Settings
@@ -102,21 +102,21 @@ namespace Spine.Unity.Examples {
 		/*
 		 *	Int Value:		0 sets ghostingEnabled to false, 1 sets ghostingEnabled to true
 		 *	Float Value:	Values greater than 0 set the spawnRate equal the float value
-		 *	String Value:	Pass RGBA hex color values in to set the color property.  IE:   "A0FF8BFF"
+		 *	String Value:	Pass RGBA hex color values in to set the color property. IE: "A0FF8BFF"
 		 */
 		void OnEvent (Spine.TrackEntry trackEntry, Spine.Event e) {
 			if (e.Data.Name.Equals("Ghosting", System.StringComparison.Ordinal)) {
 				ghostingEnabled = e.Int > 0;
 				if (e.Float > 0)
 					spawnInterval = e.Float;
-				
+
 				if (!string.IsNullOrEmpty(e.String))
 					this.color = HexToColor(e.String);
 			}
 		}
 
 		//SkeletonAnimator
-		//SkeletonAnimator or Mecanim based animations only support toggling ghostingEnabled.  Be sure not to set anything other than the Int param in Spine or String will take priority.
+		//SkeletonAnimator or Mecanim based animations only support toggling ghostingEnabled. Be sure not to set anything other than the Int param in Spine or String will take priority.
 		void Ghosting (float val) {
 			ghostingEnabled = val > 0;
 		}
@@ -179,7 +179,7 @@ namespace Spine.Unity.Examples {
 				Destroy(mat);
 		}
 
-		//based on UnifyWiki  http://wiki.unity3d.com/index.php?title=HexConverter
+		// based on UnifyWiki http://wiki.unity3d.com/index.php?title=HexConverter
 		static Color32 HexToColor (string hex) {
 			const System.Globalization.NumberStyles HexNumber = System.Globalization.NumberStyles.HexNumber;
 

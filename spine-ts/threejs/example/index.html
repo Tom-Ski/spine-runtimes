@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <title>spine-threejs</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/106/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
 <script src="../../build/spine-threejs.js"></script>
 </head>
 <style>
@@ -67,7 +67,9 @@ function load (name, scale) {
 		var skeletonData = skeletonJson.readSkeletonData(assetManager.get(skeletonFile));
 
 		// Create a SkeletonMesh from the data and attach it to the scene
-		skeletonMesh = new spine.threejs.SkeletonMesh(skeletonData);
+		skeletonMesh = new spine.threejs.SkeletonMesh(skeletonData, function(parameters) {
+			parameters.depthTest = false;
+		});
 		skeletonMesh.state.setAnimation(0, animation, true);
 		mesh.add(skeletonMesh);
 

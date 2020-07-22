@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #include "SpinePluginPrivatePCH.h"
@@ -44,6 +44,15 @@
 #include "SpineWidget.h"
 
 using namespace spine;
+
+// Workaround for https://github.com/EsotericSoftware/spine-runtimes/issues/1458
+// See issue comments for more information.
+struct SpineSlateMaterialBrush : public FSlateBrush {
+	SpineSlateMaterialBrush(class UMaterialInterface &InMaterial, const FVector2D &InImageSize)
+		: FSlateBrush(ESlateBrushDrawType::Image, FName(TEXT("None")), FMargin(0), ESlateBrushTileType::NoTile, ESlateBrushImageType::FullColor, InImageSize, FLinearColor::White, &InMaterial) {
+		ResourceName = FName(*InMaterial.GetFullName());
+	}
+};
 
 void SSpineWidget::Construct(const FArguments& args) {
 }
@@ -74,7 +83,7 @@ static void setVertex(FSlateVertex* vertex, float x, float y, float u, float v, 
 }
 
 int32 SSpineWidget::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyClippingRect, FSlateWindowElementList& OutDrawElements,
-							   int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const {
+	int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const {
 
 	SSpineWidget* self = (SSpineWidget*)this;
 	UMaterialInstanceDynamic* MatNow = nullptr;
@@ -196,7 +205,7 @@ void SSpineWidget::Flush(int32 LayerId, FSlateWindowElementList& OutDrawElements
 
 	brush = &widget->Brush;
 	if (Material) {
-		renderData.Brush = MakeShareable(new FSlateMaterialBrush(*Material, FVector2D(64, 64)));
+		renderData.Brush = MakeShareable(new SpineSlateMaterialBrush(*Material, FVector2D(64, 64)));
 		renderData.RenderingResourceHandle = FSlateApplication::Get().GetRenderer()->GetResourceHandle(*renderData.Brush);
 	}
 
@@ -240,11 +249,20 @@ void SSpineWidget::UpdateMesh(int32 LayerId, FSlateWindowElementList& OutDrawEle
 		float* attachmentUvs = nullptr;
 
 		Slot* slot = Skeleton->getDrawOrder()[i];
-		if (!slot->getBone().isActive()) continue;
+		if (!slot->getBone().isActive()) {
+			clipper.clipEnd(*slot);
+			continue;
+		}
 
 		Attachment* attachment = slot->getAttachment();
-		if (!attachment) continue;
-		if (!attachment->getRTTI().isExactly(RegionAttachment::rtti) && !attachment->getRTTI().isExactly(MeshAttachment::rtti) && !attachment->getRTTI().isExactly(ClippingAttachment::rtti)) continue;
+		if (!attachment) {
+			clipper.clipEnd(*slot);
+			continue;
+		}
+		if (!attachment->getRTTI().isExactly(RegionAttachment::rtti) && !attachment->getRTTI().isExactly(MeshAttachment::rtti) && !attachment->getRTTI().isExactly(ClippingAttachment::rtti)) {
+			clipper.clipEnd(*slot);
+			continue;
+		}
 
 		if (attachment->getRTTI().isExactly(RegionAttachment::rtti)) {
 			RegionAttachment* regionAttachment = (RegionAttachment*)attachment;
@@ -278,23 +296,38 @@ void SSpineWidget::UpdateMesh(int32 LayerId, FSlateWindowElementList& OutDrawEle
 		UMaterialInstanceDynamic* material = nullptr;
 		switch (slot->getData().getBlendMode()) {
 		case BlendMode_Normal:
-			if (!widget->pageToNormalBlendMaterial.Contains(attachmentAtlasRegion->page)) continue;
+			if (!widget->pageToNormalBlendMaterial.Contains(attachmentAtlasRegion->page)) {
+				clipper.clipEnd(*slot);
+				continue;
+			}
 			material = widget->pageToNormalBlendMaterial[attachmentAtlasRegion->page];
 			break;
 		case BlendMode_Additive:
-			if (!widget->pageToAdditiveBlendMaterial.Contains(attachmentAtlasRegion->page)) continue;
+			if (!widget->pageToAdditiveBlendMaterial.Contains(attachmentAtlasRegion->page)) {
+				clipper.clipEnd(*slot);
+				continue;
+			}
 			material = widget->pageToAdditiveBlendMaterial[attachmentAtlasRegion->page];
 			break;
 		case BlendMode_Multiply:
-			if (!widget->pageToMultiplyBlendMaterial.Contains(attachmentAtlasRegion->page)) continue;
+			if (!widget->pageToMultiplyBlendMaterial.Contains(attachmentAtlasRegion->page)) {
+				clipper.clipEnd(*slot);
+				continue;
+			}
 			material = widget->pageToMultiplyBlendMaterial[attachmentAtlasRegion->page];
 			break;
 		case BlendMode_Screen:
-			if (!widget->pageToScreenBlendMaterial.Contains(attachmentAtlasRegion->page)) continue;
+			if (!widget->pageToScreenBlendMaterial.Contains(attachmentAtlasRegion->page)) {
+				clipper.clipEnd(*slot);
+				continue;
+			}
 			material = widget->pageToScreenBlendMaterial[attachmentAtlasRegion->page];
 			break;
 		default:
-			if (!widget->pageToNormalBlendMaterial.Contains(attachmentAtlasRegion->page)) continue;
+			if (!widget->pageToNormalBlendMaterial.Contains(attachmentAtlasRegion->page)) {
+				clipper.clipEnd(*slot);
+				continue;
+			}
 			material = widget->pageToNormalBlendMaterial[attachmentAtlasRegion->page];
 		}
 
@@ -305,7 +338,10 @@ void SSpineWidget::UpdateMesh(int32 LayerId, FSlateWindowElementList& OutDrawEle
 			attachmentIndices = clipper.getClippedTriangles().buffer();
 			numIndices = clipper.getClippedTriangles().size();
 			attachmentUvs = clipper.getClippedUVs().buffer();
-			if (clipper.getClippedTriangles().size() == 0) continue;
+			if (clipper.getClippedTriangles().size() == 0) {
+				clipper.clipEnd(*slot);
+				continue;
+			}
 		}
 
 		if (lastMaterial != material) {

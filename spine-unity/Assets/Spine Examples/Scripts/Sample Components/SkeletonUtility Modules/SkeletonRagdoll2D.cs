@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,19 +15,23 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 // Contributed by: Mitch Thompson
+
+#if UNITY_2019_2_OR_NEWER
+#define HINGE_JOINT_NEW_BEHAVIOUR
+#endif
 
 using UnityEngine;
 using System.Collections;
@@ -47,7 +51,7 @@ namespace Spine.Unity.Examples {
 
 		[Header("Parameters")]
 		public bool applyOnStart;
-		[Tooltip("Warning!  You will have to re-enable and tune mix values manually if attempting to remove the ragdoll system.")]
+		[Tooltip("Warning! You will have to re-enable and tune mix values manually if attempting to remove the ragdoll system.")]
 		public bool disableIK = true;
 		public bool disableOtherConstraints = false;
 		[Space]
@@ -56,7 +60,7 @@ namespace Spine.Unity.Examples {
 		public float gravityScale = 1;
 		[Tooltip("If no BoundingBox Attachment is attached to a bone, this becomes the default Width or Radius of a Bone's ragdoll Rigidbody")]
 		public float thickness = 0.125f;
-		[Tooltip("Default rotational limit value.  Min is negative this value, Max is this value.")]
+		[Tooltip("Default rotational limit value. Min is negative this value, Max is this value.")]
 		public float rotationLimit = 20;
 		public float rootMass = 20;
 		[Tooltip("If your ragdoll seems unstable or uneffected by limits, try lowering this value.")]
@@ -67,6 +71,7 @@ namespace Spine.Unity.Examples {
 		public int colliderLayer = 0;
 		[Range(0, 1)]
 		public float mix = 1;
+		public bool oldRagdollBehaviour = true;
 		#endregion
 
 		ISkeletonAnimation targetSkeletonComponent;
@@ -158,9 +163,22 @@ namespace Spine.Unity.Examples {
 					joint.connectedAnchor = localPos;
 
 					joint.GetComponent<Rigidbody2D>().mass = joint.connectedBody.mass * massFalloffFactor;
+
+				#if HINGE_JOINT_NEW_BEHAVIOUR
+					float referenceAngle = (rbParent.transform.eulerAngles.z - t.eulerAngles.z + 360f) % 360f;
+					float minAngle = referenceAngle - rotationLimit;
+					float maxAngle = referenceAngle + rotationLimit;
+					if (maxAngle > 180f) {
+						minAngle -= 360f;
+						maxAngle -= 360f;
+					}
+				#else
+					float minAngle = - rotationLimit;
+					float maxAngle = rotationLimit;
+				#endif
 					joint.limits = new JointAngleLimits2D {
-						min = -rotationLimit,
-						max = rotationLimit
+						min = minAngle,
+						max = maxAngle
 					};
 					joint.useLimits = true;
 				}
@@ -284,7 +302,7 @@ namespace Spine.Unity.Examples {
 			t.parent = transform;
 			t.localPosition = new Vector3(b.WorldX, b.WorldY, 0);
 			t.localRotation = Quaternion.Euler(0, 0, b.WorldRotationX - b.ShearX);
-			t.localScale = new Vector3(b.WorldScaleX, b.WorldScaleY, 0);
+			t.localScale = new Vector3(b.WorldScaleX, b.WorldScaleY, 1);
 
 			// MITCH: You left "todo: proper ragdoll branching"
 			var colliders = AttachBoundingBoxRagdollColliders(b, boneGameObject, skeleton, this.gravityScale);
@@ -293,7 +311,7 @@ namespace Spine.Unity.Examples {
 				if (length == 0) {
 					var circle = boneGameObject.AddComponent<CircleCollider2D>();
 					circle.radius = thickness * 0.5f;
-				} else {				
+				} else {
 					var box = boneGameObject.AddComponent<BoxCollider2D>();
 					box.size = new Vector2(length, thickness);
 					box.offset = new Vector2(length * 0.5f, 0); // box.center in UNITY_4
@@ -321,6 +339,13 @@ namespace Spine.Unity.Examples {
 				var t = pair.Value;
 				bool isStartingBone = (b == startingBone);
 				Transform parentTransform = isStartingBone ? ragdollRoot : boneTable[b.Parent];
+				if (!oldRagdollBehaviour && isStartingBone) {
+					if (b != skeleton.RootBone) { // RagdollRoot is not skeleton root.
+						ragdollRoot.localPosition = new Vector3(b.Parent.WorldX, b.Parent.WorldY, 0);
+						ragdollRoot.localRotation = Quaternion.Euler(0, 0, GetPropagatedRotation(b.Parent));
+					}
+				}
+
 				Vector3 parentTransformWorldPosition = parentTransform.position;
 				Quaternion parentTransformWorldRotation = parentTransform.rotation;
 

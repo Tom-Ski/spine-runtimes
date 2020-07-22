@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #ifdef SPINE_UE4
@@ -52,7 +52,8 @@ PathConstraintSpacingTimeline::PathConstraintSpacingTimeline(int frameCount) : P
 }
 
 void PathConstraintSpacingTimeline::apply(Skeleton &skeleton, float lastTime, float time, Vector<Event *> *pEvents,
-										  float alpha, MixBlend blend, MixDirection direction) {
+	float alpha, MixBlend blend, MixDirection direction
+) {
 	SP_UNUSED(lastTime);
 	SP_UNUSED(pEvents);
 	SP_UNUSED(direction);
@@ -63,14 +64,14 @@ void PathConstraintSpacingTimeline::apply(Skeleton &skeleton, float lastTime, fl
 
 	if (time < _frames[0]) {
 		switch (blend) {
-			case MixBlend_Setup:
-				constraint._spacing = constraint._data._spacing;
-				return;
-			case MixBlend_First:
-				constraint._spacing += (constraint._data._spacing - constraint._spacing) * alpha;
-				return;
-			default:
-				return;
+		case MixBlend_Setup:
+			constraint._spacing = constraint._data._spacing;
+			return;
+		case MixBlend_First:
+			constraint._spacing += (constraint._data._spacing - constraint._spacing) * alpha;
+			return;
+		default:
+			return;
 		}
 	}
 
@@ -84,16 +85,15 @@ void PathConstraintSpacingTimeline::apply(Skeleton &skeleton, float lastTime, fl
 		spacing = _frames[frame + PREV_VALUE];
 		float frameTime = _frames[frame];
 		float percent = getCurvePercent(frame / ENTRIES - 1,
-										1 - (time - frameTime) / (_frames[frame + PREV_TIME] - frameTime));
+			1 - (time - frameTime) / (_frames[frame + PREV_TIME] - frameTime));
 
 		spacing += (_frames[frame + VALUE] - spacing) * percent;
 	}
 
-	if (blend == MixBlend_Setup) {
+	if (blend == MixBlend_Setup)
 		constraint._spacing = constraint._data._spacing + (spacing - constraint._data._spacing) * alpha;
-	} else {
+	else
 		constraint._spacing += (spacing - constraint._spacing) * alpha;
-	}
 }
 
 int PathConstraintSpacingTimeline::getPropertyId() {

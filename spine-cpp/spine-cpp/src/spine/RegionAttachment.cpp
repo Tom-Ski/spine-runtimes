@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #ifdef SPINE_UE4
@@ -51,25 +51,26 @@ const int RegionAttachment::BRX = 6;
 const int RegionAttachment::BRY = 7;
 
 RegionAttachment::RegionAttachment(const String &name) : Attachment(name), HasRendererObject(),
-														 _x(0),
-														 _y(0),
-														 _rotation(0),
-														 _scaleX(1),
-														 _scaleY(1),
-														 _width(0),
-														 _height(0),
-														 _regionOffsetX(0),
-														 _regionOffsetY(0),
-														 _regionWidth(0),
-														 _regionHeight(0),
-														 _regionOriginalWidth(0),
-														 _regionOriginalHeight(0),
-														 _path(),
-														 _regionU(0),
-														 _regionV(0),
-														 _regionU2(0),
-														 _regionV2(0),
-														 _color(1, 1, 1, 1) {
+	_x(0),
+	_y(0),
+	_rotation(0),
+	_scaleX(1),
+	_scaleY(1),
+	_width(0),
+	_height(0),
+	_regionOffsetX(0),
+	_regionOffsetY(0),
+	_regionWidth(0),
+	_regionHeight(0),
+	_regionOriginalWidth(0),
+	_regionOriginalHeight(0),
+	_path(),
+	_regionU(0),
+	_regionV(0),
+	_regionU2(0),
+	_regionV2(0),
+	_color(1, 1, 1, 1)
+{
 	_vertexOffset.setSize(NUM_UVS, 0);
 	_uvs.setSize(NUM_UVS, 0);
 }

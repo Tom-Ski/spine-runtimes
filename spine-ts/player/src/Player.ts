@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 module spine {
@@ -48,6 +48,12 @@ module spine {
 
 		/* the URL of the skeleton .atlas file. Atlas page images are automatically resolved. */
 		atlasUrl: string
+
+		/* Raw data URIs, mapping from a path to base 64 encoded raw data. When the player
+		   resolves a path of the `jsonUrl`, `skelUrl`, `atlasUrl`, or the image paths
+		   referenced in the atlas, it will first look for that path in this array of
+		   raw data URIs. This allows embedding of resources directly in HTML/JS. */
+		rawDataURIs: Map<string>
 
 		/* Optional: the name of the animation to be played. Default: first animation in the skeleton. */
 		animation: string
@@ -314,6 +320,8 @@ module spine {
 		private selectedBones: Bone[];
 		private parent: HTMLElement;
 
+		private stopRequestAnimationFrame = false;
+
 		constructor(parent: HTMLElement | string, private config: SpinePlayerConfig) {
 			if (typeof parent === "string") this.parent = document.getElementById(parent);
 			else this.parent = parent;
@@ -327,7 +335,7 @@ module spine {
 			if (!config.alpha) config.alpha = false;
 			if (!config.backgroundColor) config.backgroundColor = "#000000";
 			if (!config.fullScreenBackgroundColor) config.fullScreenBackgroundColor = config.backgroundColor;
-			if (typeof config.premultipliedAlpha  === "undefined") config.premultipliedAlpha = true;
+			if (typeof config.premultipliedAlpha === "undefined") config.premultipliedAlpha = true;
 			if (!config.success) config.success = (widget) => {};
 			if (!config.error) config.error = (widget, msg) => {};
 			if (!config.debug) config.debug = {
@@ -350,11 +358,11 @@ module spine {
 			if (typeof config.debug.meshes === "undefined") config.debug.meshes = false;
 
 			if (config.animations && config.animation) {
-				if  (config.animations.indexOf(config.animation) < 0) throw new Error("Default animation '" +  config.animation + "' is not contained in the list of selectable animations " + escapeHtml(JSON.stringify(this.config.animations)) + ".");
+				if (config.animations.indexOf(config.animation) < 0) throw new Error("Default animation '" + config.animation + "' is not contained in the list of selectable animations " + escapeHtml(JSON.stringify(this.config.animations)) + ".");
 			}
 
 			if (config.skins && config.skin) {
-				if  (config.skins.indexOf(config.skin) < 0) throw new Error("Default skin '" +  config.skin + "' is not contained in the list of selectable skins " + escapeHtml(JSON.stringify(this.config.skins)) + ".");
+				if (config.skins.indexOf(config.skin) < 0) throw new Error("Default skin '" + config.skin + "' is not contained in the list of selectable skins " + escapeHtml(JSON.stringify(this.config.skins)) + ".");
 			}
 
 			if (!config.controlBones) config.controlBones = [];
@@ -401,7 +409,7 @@ module spine {
 			try {
 				// Validate the configuration
 				this.config = this.validateConfig(config);
-			}  catch (e) {
+			} catch (e) {
 				this.showError(e);
 				return dom
 			}
@@ -421,6 +429,12 @@ module spine {
 
 			// Load the assets
 			this.assetManager = new spine.webgl.AssetManager(this.context);
+			if (config.rawDataURIs) {
+				for (let path in config.rawDataURIs) {
+					let data = config.rawDataURIs[path];
+					this.assetManager.setRawDataURI(path, data);
+				}
+			}
 			if (config.jsonUrl) this.assetManager.loadText(config.jsonUrl);
 			else this.assetManager.loadBinary(config.skelUrl);
 			this.assetManager.loadTextureAtlas(config.atlasUrl);
@@ -705,7 +719,7 @@ module spine {
 		}
 
 		drawFrame (requestNextFrame = true) {
-			if (requestNextFrame) requestAnimationFrame(() => this.drawFrame());
+			if (requestNextFrame && !this.stopRequestAnimationFrame) requestAnimationFrame(() => this.drawFrame());
 			let ctx = this.context;
 			let gl = ctx.gl;
 
@@ -755,7 +769,7 @@ module spine {
 				}
 
 				let transitionAlpha = ((performance.now() - this.viewportTransitionStart) / 1000) / this.config.viewport.transitionTime;
-				if (this.previousViewport &&  transitionAlpha < 1) {
+				if (this.previousViewport && transitionAlpha < 1) {
 					let oldViewport = {
 						x: this.previousViewport.x - (this.previousViewport.padLeft as number),
 						y: this.previousViewport.y - (this.previousViewport.padBottom as number),
@@ -782,7 +796,7 @@ module spine {
 				// Draw background image if given
 				if (this.config.backgroundImage && this.config.backgroundImage.url) {
 					let bgImage = this.assetManager.get(this.config.backgroundImage.url);
-					if (!this.config.backgroundImage.x) {
+					if (!(this.config.backgroundImage.hasOwnProperty("x") && this.config.backgroundImage.hasOwnProperty("y") && this.config.backgroundImage.hasOwnProperty("width") && this.config.backgroundImage.hasOwnProperty("height"))) {
 						this.sceneRenderer.drawTexture(bgImage, viewport.x, viewport.y, viewport.width, viewport.height);
 					} else {
 						this.sceneRenderer.drawTexture(bgImage, this.config.backgroundImage.x, this.config.backgroundImage.y, this.config.backgroundImage.width, this.config.backgroundImage.height);
@@ -1189,7 +1203,7 @@ module spine {
 
 			let steps = 100;
 			let stepTime = animation.duration > 0 ? animation.duration / steps : 0;
-			let minX =  100000000;
+			let minX = 100000000;
 			let maxX = -100000000;
 			let minY = 100000000;
 			let maxY = -100000000;
@@ -1219,6 +1233,10 @@ module spine {
 				width: size.x,
 				height: size.y
 			};
+		}
+
+		public stopRendering() {
+			this.stopRequestAnimationFrame = true;
 		}
 	}
 

@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,25 +15,32 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 module spine {
+	/** Stores an entry in the skin consisting of the slot index, name, and attachment **/
 	export class SkinEntry {
 		constructor(public slotIndex: number, public name: string, public attachment: Attachment) { }
 	}
 
+	/** Stores attachments by slot index and attachment name.
+	 *
+	 * See SkeletonData {@link SkeletonData#defaultSkin}, Skeleton {@link Skeleton#skin}, and
+	 * [Runtime skins](http://esotericsoftware.com/spine-runtime-skins) in the Spine Runtimes Guide. */
 	export class Skin {
+		/** The skin's name, which is unique across all skins in the skeleton. */
 		name: string;
+
 		attachments = new Array<Map<Attachment>>();
 		bones = Array<BoneData>();
 		constraints = new Array<ConstraintData>();
@@ -43,6 +50,7 @@ module spine {
 			this.name = name;
 		}
 
+		/** Adds an attachment to the skin for the specified slot index and name. */
 		setAttachment (slotIndex: number, name: string, attachment: Attachment) {
 			if (attachment == null) throw new Error("attachment cannot be null.");
 			let attachments = this.attachments;
@@ -51,6 +59,7 @@ module spine {
 			attachments[slotIndex][name] = attachment;
 		}
 
+		/** Adds all attachments, bones, and constraints from the specified skin to this skin. */
 		addSkin (skin: Skin) {
 			for(let i = 0; i < skin.bones.length; i++) {
 				let bone = skin.bones[i];
@@ -83,6 +92,8 @@ module spine {
 			}
 		}
 
+		/** Adds all bones and constraints and copies of all attachments from the specified skin to this skin. Mesh attachments are not
+		 * copied, instead a new linked mesh is created. The attachment copies can be modified without affecting the originals. */
 		copySkin (skin: Skin) {
 			for(let i = 0; i < skin.bones.length; i++) {
 				let bone = skin.bones[i];
@@ -122,17 +133,19 @@ module spine {
 			}
 		}
 
-		/** @return May be null. */
+		/** Returns the attachment for the specified slot index and name, or null. */
 		getAttachment (slotIndex: number, name: string): Attachment {
 			let dictionary = this.attachments[slotIndex];
 			return dictionary ? dictionary[name] : null;
 		}
 
+		/** Removes the attachment in the skin for the specified slot index and name, if any. */
 		removeAttachment (slotIndex: number, name: string) {
 			let dictionary = this.attachments[slotIndex];
 			if (dictionary) dictionary[name] = null;
 		}
 
+		/** Returns all attachments in this skin. */
 		getAttachments (): Array<SkinEntry> {
 			let entries = new Array<SkinEntry>();
 			for (var i = 0; i < this.attachments.length; i++) {
@@ -147,6 +160,7 @@ module spine {
 			return entries;
 		}
 
+		/** Returns all attachments in this skin for the specified slot index. */
 		getAttachmentsForSlot (slotIndex: number, attachments: Array<SkinEntry>) {
 			let slotAttachments = this.attachments[slotIndex];
 			if (slotAttachments) {
@@ -157,6 +171,7 @@ module spine {
 			}
 		}
 
+		/** Clears all attachments, bones, and constraints. */
 		clear () {
 			this.attachments.length = 0;
 			this.bones.length = 0;

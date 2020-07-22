@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 package com.esotericsoftware.spine;
@@ -37,6 +37,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.FloatArray;
+import com.badlogic.gdx.utils.IntSet;
 
 import com.esotericsoftware.spine.attachments.Attachment;
 import com.esotericsoftware.spine.attachments.VertexAttachment;
@@ -44,19 +45,34 @@ import com.esotericsoftware.spine.attachments.VertexAttachment;
 /** A simple container for a list of timelines and a name. */
 public class Animation {
 	final String name;
-	final Array<Timeline> timelines;
+	Array<Timeline> timelines;
+	final IntSet timelineIDs = new IntSet();
 	float duration;
 
 	public Animation (String name, Array<Timeline> timelines, float duration) {
 		if (name == null) throw new IllegalArgumentException("name cannot be null.");
-		if (timelines == null) throw new IllegalArgumentException("timelines cannot be null.");
 		this.name = name;
-		this.timelines = timelines;
 		this.duration = duration;
+		setTimelines(timelines);
 	}
 
+	/** If the returned array or the timelines it contains are modified, {@link #setTimelines(Array)} must be called. */
 	public Array<Timeline> getTimelines () {
 		return timelines;
+	}
+
+	public void setTimelines (Array<Timeline> timelines) {
+		if (timelines == null) throw new IllegalArgumentException("timelines cannot be null.");
+		this.timelines = timelines;
+
+		timelineIDs.clear();
+		for (Timeline timeline : timelines)
+			timelineIDs.add(timeline.getPropertyId());
+	}
+
+	/** Return true if this animation contains a timeline with the specified property ID. **/
+	public boolean hasTimeline (int id) {
+		return timelineIDs.contains(id);
 	}
 
 	/** The duration of the animation in seconds, which is the highest time of all keys in the timeline. */
@@ -154,7 +170,7 @@ public class Animation {
 		 *           apply animations on top of each other (layering).
 		 * @param blend Controls how mixing is applied when <code>alpha</code> < 1.
 		 * @param direction Indicates whether the timeline is mixing in or out. Used by timelines which perform instant transitions,
-		 *           such as {@link DrawOrderTimeline} or {@link AttachmentTimeline}. */
+		 *           such as {@link DrawOrderTimeline} or {@link AttachmentTimeline}, and other such as {@link ScaleTimeline}. */
 		public void apply (Skeleton skeleton, float lastTime, float time, Array<Event> events, float alpha, MixBlend blend,
 			MixDirection direction);
 
@@ -928,18 +944,14 @@ public class Animation {
 
 			Slot slot = skeleton.slots.get(slotIndex);
 			if (!slot.bone.active) return;
-			if (direction == out && blend == setup) {
-				String attachmentName = slot.data.attachmentName;
-				slot.setAttachment(attachmentName == null ? null : skeleton.getAttachment(slotIndex, attachmentName));
+			if (direction == out) {
+				if (blend == setup) setAttachment(skeleton, slot, slot.data.attachmentName);
 				return;
 			}
 
 			float[] frames = this.frames;
 			if (time < frames[0]) { // Time is before first frame.
-				if (blend == setup || blend == first) {
-					String attachmentName = slot.data.attachmentName;
-					slot.setAttachment(attachmentName == null ? null : skeleton.getAttachment(slotIndex, attachmentName));
-				}
+				if (blend == setup || blend == first) setAttachment(skeleton, slot, slot.data.attachmentName);
 				return;
 			}
 
@@ -949,7 +961,10 @@ public class Animation {
 			else
 				frameIndex = binarySearch(frames, time) - 1;
 
-			String attachmentName = attachmentNames[frameIndex];
+			setAttachment(skeleton, slot, attachmentNames[frameIndex]);
+		}
+
+		private void setAttachment (Skeleton skeleton, Slot slot, String attachmentName) {
 			slot.setAttachment(attachmentName == null ? null : skeleton.getAttachment(slotIndex, attachmentName));
 		}
 	}
@@ -1302,8 +1317,8 @@ public class Animation {
 
 			Array<Slot> drawOrder = skeleton.drawOrder;
 			Array<Slot> slots = skeleton.slots;
-			if (direction == out && blend == setup) {
-				arraycopy(slots.items, 0, drawOrder.items, 0, slots.size);
+			if (direction == out) {
+				if (blend == setup) arraycopy(slots.items, 0, drawOrder.items, 0, slots.size);
 				return;
 			}
 

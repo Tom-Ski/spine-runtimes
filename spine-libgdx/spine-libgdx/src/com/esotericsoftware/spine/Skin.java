@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,23 +15,22 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 package com.esotericsoftware.spine;
 
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.OrderedMap;
-
 import com.esotericsoftware.spine.attachments.Attachment;
 import com.esotericsoftware.spine.attachments.MeshAttachment;
 
@@ -41,7 +40,7 @@ import com.esotericsoftware.spine.attachments.MeshAttachment;
  * <a href="http://esotericsoftware.com/spine-runtime-skins">Runtime skins</a> in the Spine Runtimes Guide. */
 public class Skin {
 	final String name;
-	final OrderedMap<SkinEntry, Attachment> attachments = new OrderedMap();
+	final OrderedMap<SkinEntry, SkinEntry> attachments = new OrderedMap();
 	final Array<BoneData> bones = new Array();
 	final Array<ConstraintData> constraints = new Array();
 	private final SkinEntry lookup = new SkinEntry();
@@ -56,7 +55,11 @@ public class Skin {
 	public void setAttachment (int slotIndex, String name, Attachment attachment) {
 		if (slotIndex < 0) throw new IllegalArgumentException("slotIndex must be >= 0.");
 		if (attachment == null) throw new IllegalArgumentException("attachment cannot be null.");
-		attachments.put(new SkinEntry(slotIndex, name, attachment), attachment);
+		SkinEntry newEntry = new SkinEntry(slotIndex, name, attachment);
+		SkinEntry oldEntry = attachments.put(newEntry, newEntry);
+		if (oldEntry != null) {
+			oldEntry.attachment = attachment;
+		}
 	}
 
 	/** Adds all attachments, bones, and constraints from the specified skin to this skin. */
@@ -96,7 +99,8 @@ public class Skin {
 	public Attachment getAttachment (int slotIndex, String name) {
 		if (slotIndex < 0) throw new IllegalArgumentException("slotIndex must be >= 0.");
 		lookup.set(slotIndex, name);
-		return attachments.get(lookup);
+		SkinEntry entry = attachments.get(lookup);
+		return entry != null ? entry.attachment : null;
 	}
 
 	/** Removes the attachment in the skin for the specified slot index and name, if any. */

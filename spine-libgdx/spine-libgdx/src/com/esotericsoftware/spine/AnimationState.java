@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 package com.esotericsoftware.spine;
@@ -77,12 +77,8 @@ public class AnimationState {
 	 * (which affects B and C). Without using D to mix out, A would be applied fully until mixing completes, then snap into
 	 * place. */
 	static private final int HOLD_MIX = 3;
-	/** 1) An attachment timeline in a subsequent track entry sets the attachment for the same slot as this attachment
-	 * timeline.<br>
-	 * Result: This attachment timeline will not use MixDirection.out, which would otherwise show the setup mode attachment (or
-	 * none if not visible in setup mode). This allows deform timelines to be applied for the subsequent entry to mix from, rather
-	 * than mixing from the setup pose. */
-	static private final int NOT_LAST = 4;
+
+	static private final int SETUP = 1, CURRENT = 2;
 
 	private AnimationStateData data;
 	final Array<TrackEntry> tracks = new Array();
@@ -92,6 +88,7 @@ public class AnimationState {
 	private final IntSet propertyIDs = new IntSet();
 	boolean animationsChanged;
 	private float timeScale = 1;
+	private int unkeyedState;
 
 	final Pool<TrackEntry> trackEntryPool = new Pool() {
 		protected Object newObject () {
@@ -133,7 +130,7 @@ public class AnimationState {
 				float nextTime = current.trackLast - next.delay;
 				if (nextTime >= 0) {
 					next.delay = 0;
-					next.trackTime = current.timeScale == 0 ? 0 : (nextTime / current.timeScale + delta) * next.timeScale;
+					next.trackTime += current.timeScale == 0 ? 0 : (nextTime / current.timeScale + delta) * next.timeScale;
 					current.trackTime += currentDelta;
 					setCurrent(i, next, true);
 					while (next.mixingFrom != null) {
@@ -193,8 +190,8 @@ public class AnimationState {
 		return false;
 	}
 
-	/** Poses the skeleton using the track entry animations. There are no side effects other than invoking listeners, so the
-	 * animation state can be applied to multiple skeletons to pose them identically.
+	/** Poses the skeleton using the track entry animations. The animation state is not changed, so can be applied to multiple
+	 * skeletons to pose them identically.
 	 * @return True if any animations were applied. */
 	public boolean apply (Skeleton skeleton) {
 		if (skeleton == null) throw new IllegalArgumentException("skeleton cannot be null.");
@@ -222,8 +219,13 @@ public class AnimationState {
 			int timelineCount = current.animation.timelines.size;
 			Object[] timelines = current.animation.timelines.items;
 			if ((i == 0 && mix == 1) || blend == MixBlend.add) {
-				for (int ii = 0; ii < timelineCount; ii++)
-					((Timeline)timelines[ii]).apply(skeleton, animationLast, animationTime, events, mix, blend, MixDirection.in);
+				for (int ii = 0; ii < timelineCount; ii++) {
+					Object timeline = timelines[ii];
+					if (timeline instanceof AttachmentTimeline)
+						applyAttachmentTimeline((AttachmentTimeline)timeline, skeleton, animationTime, blend, true);
+					else
+						((Timeline)timeline).apply(skeleton, animationLast, animationTime, events, mix, blend, MixDirection.in);
+				}
 			} else {
 				int[] timelineMode = current.timelineMode.items;
 
@@ -233,11 +235,13 @@ public class AnimationState {
 
 				for (int ii = 0; ii < timelineCount; ii++) {
 					Timeline timeline = (Timeline)timelines[ii];
-					MixBlend timelineBlend = (timelineMode[ii] & NOT_LAST - 1) == SUBSEQUENT ? blend : MixBlend.setup;
+					MixBlend timelineBlend = timelineMode[ii] == SUBSEQUENT ? blend : MixBlend.setup;
 					if (timeline instanceof RotateTimeline) {
 						applyRotateTimeline((RotateTimeline)timeline, skeleton, animationTime, mix, timelineBlend, timelinesRotation,
 							ii << 1, firstFrame);
-					} else
+					} else if (timeline instanceof AttachmentTimeline)
+						applyAttachmentTimeline((AttachmentTimeline)timeline, skeleton, animationTime, blend, true);
+					else
 						timeline.apply(skeleton, animationLast, animationTime, events, mix, timelineBlend, MixDirection.in);
 				}
 			}
@@ -246,6 +250,20 @@ public class AnimationState {
 			current.nextAnimationLast = animationTime;
 			current.nextTrackLast = current.trackTime;
 		}
+
+		// Set slots attachments to the setup pose, if needed. This occurs if an animation that is mixing out sets attachments so
+		// subsequent timelines see any deform, but the subsequent timelines don't set an attachment (eg they are also mixing out or
+		// the time is before the first key).
+		int setupState = unkeyedState + SETUP;
+		Object[] slots = skeleton.slots.items;
+		for (int i = 0, n = skeleton.slots.size; i < n; i++) {
+			Slot slot = (Slot)slots[i];
+			if (slot.attachmentState == setupState) {
+				String attachmentName = slot.data.attachmentName;
+				slot.setAttachment(attachmentName == null ? null : skeleton.getAttachment(slot.data.index, attachmentName));
+			}
+		}
+		unkeyedState += 2; // Increasing after each use avoids the need to reset attachmentState for every slot.
 
 		queue.drain();
 		return applied;
@@ -289,12 +307,8 @@ public class AnimationState {
 				MixDirection direction = MixDirection.out;
 				MixBlend timelineBlend;
 				float alpha;
-				switch (timelineMode[i] & NOT_LAST - 1) {
+				switch (timelineMode[i]) {
 				case SUBSEQUENT:
-					if (!attachments && timeline instanceof AttachmentTimeline) {
-						if ((timelineMode[i] & NOT_LAST) == NOT_LAST) continue;
-						blend = MixBlend.setup;
-					}
 					if (!drawOrder && timeline instanceof DrawOrderTimeline) continue;
 					timelineBlend = blend;
 					alpha = alphaMix;
@@ -307,7 +321,7 @@ public class AnimationState {
 					timelineBlend = MixBlend.setup;
 					alpha = alphaHold;
 					break;
-				default:
+				default: // HOLD_MIX
 					timelineBlend = MixBlend.setup;
 					TrackEntry holdMix = (TrackEntry)timelineHoldMix[i];
 					alpha = alphaHold * Math.max(0, 1 - holdMix.mixTime / holdMix.mixDuration);
@@ -317,14 +331,11 @@ public class AnimationState {
 				if (timeline instanceof RotateTimeline) {
 					applyRotateTimeline((RotateTimeline)timeline, skeleton, animationTime, alpha, timelineBlend, timelinesRotation,
 						i << 1, firstFrame);
-				} else {
-					if (timelineBlend == MixBlend.setup) {
-						if (timeline instanceof AttachmentTimeline) {
-							if (attachments || (timelineMode[i] & NOT_LAST) == NOT_LAST) direction = MixDirection.in;
-						} else if (timeline instanceof DrawOrderTimeline) {
-							if (drawOrder) direction = MixDirection.in;
-						}
-					}
+				} else if (timeline instanceof AttachmentTimeline)
+					applyAttachmentTimeline((AttachmentTimeline)timeline, skeleton, animationTime, timelineBlend, attachments);
+				else {
+					if (drawOrder && timeline instanceof DrawOrderTimeline && timelineBlend == MixBlend.setup)
+						direction = MixDirection.in;
 					timeline.apply(skeleton, animationLast, animationTime, events, alpha, timelineBlend, direction);
 				}
 			}
@@ -338,6 +349,40 @@ public class AnimationState {
 		return mix;
 	}
 
+	/** Applies the attachment timeline and sets {@link Slot#attachmentState}.
+	 * @param attachments False when: 1) the attachment timeline is mixing out, 2) mix < attachmentThreshold, and 3) the timeline
+	 *           is not the last timeline to set the slot's attachment. In that case the timeline is applied only so subsequent
+	 *           timelines see any deform. */
+	private void applyAttachmentTimeline (AttachmentTimeline timeline, Skeleton skeleton, float time, MixBlend blend,
+		boolean attachments) {
+
+		Slot slot = skeleton.slots.get(timeline.slotIndex);
+		if (!slot.bone.active) return;
+
+		float[] frames = timeline.frames;
+		if (time < frames[0]) { // Time is before first frame.
+			if (blend == MixBlend.setup || blend == MixBlend.first)
+				setAttachment(skeleton, slot, slot.data.attachmentName, attachments);
+		} else {
+			int frameIndex;
+			if (time >= frames[frames.length - 1]) // Time is after last frame.
+				frameIndex = frames.length - 1;
+			else
+				frameIndex = Animation.binarySearch(frames, time) - 1;
+			setAttachment(skeleton, slot, timeline.attachmentNames[frameIndex], attachments);
+		}
+
+		// If an attachment wasn't set (ie before the first frame or attachments is false), set the setup attachment later.
+		if (slot.attachmentState <= unkeyedState) slot.attachmentState = unkeyedState + SETUP;
+	}
+
+	private void setAttachment (Skeleton skeleton, Slot slot, String attachmentName, boolean attachments) {
+		slot.setAttachment(attachmentName == null ? null : skeleton.getAttachment(slot.data.index, attachmentName));
+		if (attachments) slot.attachmentState = unkeyedState + CURRENT;
+	}
+
+	/** Applies the rotate timeline, mixing with the current pose while keeping the same rotation direction chosen as the shortest
+	 * the first time the mixing was applied. */
 	private void applyRotateTimeline (RotateTimeline timeline, Skeleton skeleton, float time, float alpha, MixBlend blend,
 		float[] timelinesRotation, int i, boolean firstFrame) {
 
@@ -695,7 +740,7 @@ public class AnimationState {
 		entry.next = null;
 	}
 
-	private void animationsChanged () {
+	void animationsChanged () {
 		animationsChanged = false;
 
 		// Process in the order that animations are applied.
@@ -709,16 +754,6 @@ public class AnimationState {
 				if (entry.mixingTo == null || entry.mixBlend != MixBlend.add) computeHold(entry);
 				entry = entry.mixingTo;
 			} while (entry != null);
-		}
-
-		// Process in the reverse order that animations are applied.
-		propertyIDs.clear(2048);
-		for (int i = tracks.size - 1; i >= 0; i--) {
-			TrackEntry entry = tracks.get(i);
-			while (entry != null) {
-				computeNotLast(entry);
-				entry = entry.mixingFrom;
-			}
 		}
 	}
 
@@ -746,11 +781,11 @@ public class AnimationState {
 			if (!propertyIDs.add(id))
 				timelineMode[i] = SUBSEQUENT;
 			else if (to == null || timeline instanceof AttachmentTimeline || timeline instanceof DrawOrderTimeline
-				|| timeline instanceof EventTimeline || !hasTimeline(to, id)) {
+				|| timeline instanceof EventTimeline || !to.animation.hasTimeline(id)) {
 				timelineMode[i] = FIRST;
 			} else {
 				for (TrackEntry next = to.mixingTo; next != null; next = next.mixingTo) {
-					if (hasTimeline(next, id)) continue;
+					if (next.animation.hasTimeline(id)) continue;
 					if (next.mixDuration > 0) {
 						timelineMode[i] = HOLD_MIX;
 						timelineHoldMix[i] = next;
@@ -761,27 +796,6 @@ public class AnimationState {
 				timelineMode[i] = HOLD;
 			}
 		}
-	}
-
-	private void computeNotLast (TrackEntry entry) {
-		Object[] timelines = entry.animation.timelines.items;
-		int timelinesCount = entry.animation.timelines.size;
-		int[] timelineMode = entry.timelineMode.items;
-		IntSet propertyIDs = this.propertyIDs;
-
-		for (int i = 0; i < timelinesCount; i++) {
-			if (timelines[i] instanceof AttachmentTimeline) {
-				AttachmentTimeline timeline = (AttachmentTimeline)timelines[i];
-				if (!propertyIDs.add(timeline.slotIndex)) timelineMode[i] |= NOT_LAST;
-			}
-		}
-	}
-
-	private boolean hasTimeline (TrackEntry entry, int id) {
-		Object[] timelines = entry.animation.timelines.items;
-		for (int i = 0, n = entry.animation.timelines.size; i < n; i++)
-			if (((Timeline)timelines[i]).getPropertyId() == id) return true;
-		return false;
 	}
 
 	/** Returns the track entry for the animation currently playing on the track, or null if no animation is currently playing. */

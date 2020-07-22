@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 // Contributed by: Mitch Thompson
@@ -47,7 +47,7 @@ namespace Spine.Unity.Examples {
 
 		[Header("Parameters")]
 		public bool applyOnStart;
-		[Tooltip("Warning!  You will have to re-enable and tune mix values manually if attempting to remove the ragdoll system.")]
+		[Tooltip("Warning! You will have to re-enable and tune mix values manually if attempting to remove the ragdoll system.")]
 		public bool disableIK = true;
 		public bool disableOtherConstraints = false;
 		[Space(18)]
@@ -58,7 +58,7 @@ namespace Spine.Unity.Examples {
 		public bool useGravity = true;
 		[Tooltip("If no BoundingBox Attachment is attached to a bone, this becomes the default Width or Radius of a Bone's ragdoll Rigidbody")]
 		public float thickness = 0.125f;
-		[Tooltip("Default rotational limit value.  Min is negative this value, Max is this value.")]
+		[Tooltip("Default rotational limit value. Min is negative this value, Max is this value.")]
 		public float rotationLimit = 20;
 		public float rootMass = 20;
 		[Tooltip("If your ragdoll seems unstable or uneffected by limits, try lowering this value.")]
@@ -68,6 +68,7 @@ namespace Spine.Unity.Examples {
 		public int colliderLayer = 0;
 		[Range(0, 1)]
 		public float mix = 1;
+		public bool oldRagdollBehaviour = true;
 		#endregion
 
 		ISkeletonAnimation targetSkeletonComponent;
@@ -200,7 +201,7 @@ namespace Spine.Unity.Examples {
 					Debug.LogWarning(msg);
 				}
 			}
-				
+
 			// Disable skeleton constraints.
 			if (disableIK) {
 				var ikConstraints = skeleton.IkConstraints;
@@ -263,7 +264,7 @@ namespace Spine.Unity.Examples {
 			isActive = false;
 			foreach (var t in boneTable.Values)
 				Destroy(t.gameObject);
-			
+
 			Destroy(ragdollRoot.gameObject);
 
 			boneTable.Clear();
@@ -298,7 +299,7 @@ namespace Spine.Unity.Examples {
 				if (length == 0) {
 					var ball = boneGameObject.AddComponent<SphereCollider>();
 					ball.radius = thickness * 0.5f;
-				} else {					
+				} else {
 					var box = boneGameObject.AddComponent<BoxCollider>();
 					box.size = new Vector3(length, thickness, thickness);
 					box.center = new Vector3(length * 0.5f, 0);
@@ -322,6 +323,12 @@ namespace Spine.Unity.Examples {
 				var t = pair.Value;
 				bool isStartingBone = b == StartingBone;
 				Transform parentTransform = isStartingBone ? ragdollRoot : boneTable[b.Parent];
+				if (!oldRagdollBehaviour && isStartingBone) {
+					if (b != skeleton.RootBone) { // RagdollRoot is not skeleton root.
+						ragdollRoot.localPosition = new Vector3(b.Parent.WorldX, b.Parent.WorldY, 0);
+						ragdollRoot.localRotation = Quaternion.Euler(0, 0, GetPropagatedRotation(b.Parent));
+					}
+				}
 				Vector3 parentTransformWorldPosition = parentTransform.position;
 				Quaternion parentTransformWorldRotation = parentTransform.rotation;
 
@@ -369,7 +376,7 @@ namespace Spine.Unity.Examples {
 			foreach (Slot s in skeleton.Slots) {
 				if (s.Bone == b) {
 					skin.GetAttachments(skeleton.Slots.IndexOf(s), skinEntries);
-					
+
 					foreach (var entry in skinEntries) {
 						var bbAttachment = entry.Attachment as BoundingBoxAttachment;
 						if (bbAttachment != null) {

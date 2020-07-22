@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 -- Spine Runtimes License Agreement
--- Last updated May 1, 2019. Replaces all prior versions.
+-- Last updated January 1, 2020. Replaces all prior versions.
 --
--- Copyright (c) 2013-2019, Esoteric Software LLC
+-- Copyright (c) 2013-2020, Esoteric Software LLC
 --
 -- Integration of the Spine Runtimes into software or otherwise creating
 -- derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
 -- Spine Editor license and redistribution of the Products in any form must
 -- include this license and copyright notice.
 --
--- THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
--- OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
--- OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
--- NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
--- INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
--- BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
--- INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
--- THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
--- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
--- EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-- THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-- DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+-- DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+-- BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+-- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+-- THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -------------------------------------------------------------------------------
 
 local utils = {}
@@ -130,10 +130,10 @@ function utils.arrayCopy (src, srcOffset, dst, dstOffset, size)
 end
 
 function utils.arrayContains(array, element)
-  for i, arrayElement in ipairs(array) do    
-    if arrayElement == element then return true end
-  end
-  return false
+	for i, arrayElement in ipairs(array) do
+		if arrayElement == element then return true end
+	end
+	return false
 end
 
 function utils.clamp (value, min, max)
@@ -143,23 +143,23 @@ function utils.clamp (value, min, max)
 end
 
 function utils.signum (value)
-  if value < 0 then
-    return -1
-  elseif value > 0 then
-    return 1
-  else
-    return 0
-  end
+	if value < 0 then
+		return -1
+	elseif value > 0 then
+		return 1
+	else
+		return 0
+	end
 end
 
 -- Implements Java float modulo
 function utils.mod(a, b)
-  if b < 0 then b = -b end
-  if a < 0 then
-    return -(-a % b)
-  else
-    return a % b
-  end
+	if b < 0 then b = -b end
+	if a < 0 then
+		return -(-a % b)
+	else
+		return a % b
+	end
 end
 
 function utils.randomTriangular(min, max)
@@ -174,21 +174,24 @@ function utils.randomTriangularWith(min, max, mode)
 end
 
 function utils.testBit(value, bit)
-  return value % (2 * bit) >= bit
+	if (value == nil) then return 0 end
+	return value % (2 * bit) >= bit
 end
 
 function utils.setBit(value, bit)
-  if value % (2 * bit) >= bit then
-    return value
-  end
-  return value + bit
+	if (value == nil) then return 0 end
+	if value % (2 * bit) >= bit then
+		return value
+	end
+	return value + bit
 end
 
 function utils.clearBit(value, bit)
-  if value % (2 * bit) >= bit then
-    return value - bit
-  end
-  return value
+	if (value == nil) then return 0 end
+	if value % (2 * bit) >= bit then
+		return value - bit
+	end
+	return value
 end
 
 return utils

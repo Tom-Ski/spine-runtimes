@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 using Microsoft.Xna.Framework;
@@ -36,12 +36,12 @@ using System.Text;
 
 namespace Spine {
 	/// <summary>
-	/// Batch drawing of lines and shapes that can be derrived from lines.
-	/// 
+	/// Batch drawing of lines and shapes that can be derived from lines.
+	///
 	/// Call drawing methods in between Begin()/End()
 	/// </summary>
 	public class ShapeRenderer {
-		GraphicsDevice device;		
+		GraphicsDevice device;
 		List<VertexPositionColor> vertices = new List<VertexPositionColor>();
 		Color color = Color.White;
 		BasicEffect effect;
@@ -77,18 +77,18 @@ namespace Spine {
 
 		/** Draws a circle using {@link ShapeType#Line} or {@link ShapeType#Filled}. */
 		public void Circle(float x, float y, float radius, int segments) {
-			if (segments <= 0) throw new ArgumentException("segments must be > 0.");			
+			if (segments <= 0) throw new ArgumentException("segments must be > 0.");
 			float angle = 2 * MathUtils.PI / segments;
 			float cos = MathUtils.Cos(angle);
 			float sin = MathUtils.Sin(angle);
 			float cx = radius, cy = 0;
 			float temp = 0;
-							
-			for (int i = 0; i < segments; i++) {				
+
+			for (int i = 0; i < segments; i++) {
 				vertices.Add(new VertexPositionColor(new Vector3(x + cx, y + cy, 0), color));
 				temp = cx;
 				cx = cos * cx - sin * cy;
-				cy = sin * temp + cos * cy;				
+				cy = sin * temp + cos * cy;
 				vertices.Add(new VertexPositionColor(new Vector3(x + cx, y + cy, 0), color));
 			}
 			vertices.Add(new VertexPositionColor(new Vector3(x + cx, y + cy, 0), color));
@@ -157,7 +157,7 @@ namespace Spine {
 
 			foreach (EffectPass pass in effect.CurrentTechnique.Passes) {
 				pass.Apply();
-				device.DrawUserPrimitives(PrimitiveType.LineList, verticesArray, 0, verticesArray.Length / 2);		
+				device.DrawUserPrimitives(PrimitiveType.LineList, verticesArray, 0, verticesArray.Length / 2);
 			}
 
 			vertices.Clear();

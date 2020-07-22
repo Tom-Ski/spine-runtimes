@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 -- Spine Runtimes License Agreement
--- Last updated May 1, 2019. Replaces all prior versions.
+-- Last updated January 1, 2020. Replaces all prior versions.
 --
--- Copyright (c) 2013-2019, Esoteric Software LLC
+-- Copyright (c) 2013-2020, Esoteric Software LLC
 --
 -- Integration of the Spine Runtimes into software or otherwise creating
 -- derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
 -- Spine Editor license and redistribution of the Products in any form must
 -- include this license and copyright notice.
 --
--- THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
--- OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
--- OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
--- NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
--- INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
--- BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
--- INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
--- THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
--- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
--- EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-- THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-- DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+-- DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+-- BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+-- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+-- THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -------------------------------------------------------------------------------
 
 local setmetatable = setmetatable
@@ -50,8 +50,8 @@ function MeshAttachment.new (name)
 	self.hullLength = 0
 	self.parentMesh = nil
 	self.tempColor = Color.newWith(1, 1, 1, 1)
-  self.width = 0
-  self.height = 0
+	self.width = 0
+	self.height = 0
 	setmetatable(self, MeshAttachment)
 	return self
 end
@@ -61,11 +61,11 @@ function MeshAttachment:updateUVs ()
 	local v = 0
 	local width = 0
 	local height = 0
-	
+
 	local regionUVs = self.regionUVs
 	if not self.uvs or (#self.uvs ~= #regionUVs) then self.uvs = utils.newNumberArray(#regionUVs) end
 	local uvs = self.uvs
-	
+
 	if not self.region then
 		u = 0
 		v = 0
@@ -75,7 +75,7 @@ function MeshAttachment:updateUVs ()
 		local region = self.region
 		local textureWidth = region.page.width
 		local textureHeight = region.page.height
-		
+
 		if region.degrees == 90 then
 			u = region.u - (region.originalHeight - region.offsetY - region.height) / textureWidth
 			v = region.v - (region.originalWidth - region.offsetX - region.width) / textureHeight
@@ -141,40 +141,40 @@ function MeshAttachment:setParentMesh (parentMesh)
 end
 
 function MeshAttachment:copy ()
-  if self.parentMesh then return self:newLinkedMesh() end
-  
-  local copy = MeshAttachment.new(self.name)  
-  copy.region = self.region
-  copy.path = self.path
-  copy.color:setFrom(self.color)
+	if self.parentMesh then return self:newLinkedMesh() end
 
-  self:copyTo(copy)
-  copy.regionUVs = utils.copy(self.regionUVs)
-  copy.uvs = utils.copy(self.uvs)
-  copy.triangles = utils.copy(self.triangles)
-  copy.hullLength = self.hullLength
-  if self.edges then
-    copy.edges = utils.copy(edges)
-  end
-  copy.width = self.width
-  copy.height = self.height
-  
-  return copy
+	local copy = MeshAttachment.new(self.name)
+	copy.region = self.region
+	copy.path = self.path
+	copy.color:setFrom(self.color)
+
+	self:copyTo(copy)
+	copy.regionUVs = utils.copy(self.regionUVs)
+	copy.uvs = utils.copy(self.uvs)
+	copy.triangles = utils.copy(self.triangles)
+	copy.hullLength = self.hullLength
+	if self.edges then
+		copy.edges = utils.copy(edges)
+	end
+	copy.width = self.width
+	copy.height = self.height
+
+	return copy
 end
 
 function MeshAttachment:newLinkedMesh ()
-  local copy = MeshAttachment.new(self.name)  
-  copy.region = self.region
-  copy.path = self.path
-  copy.color:setFrom(self.color)
-  if self.parentMesh then
-    copy.deformAttachment = self.parentMesh
-  else
-    copy.deformAttachment = self
-  end
-  copy:setParentMesh(self.parentMesh)
-  copy:updateUVs()
-  return copy
+	local copy = MeshAttachment.new(self.name)
+	copy.region = self.region
+	copy.path = self.path
+	copy.color:setFrom(self.color)
+	if self.parentMesh then
+		copy.deformAttachment = self.parentMesh
+	else
+		copy.deformAttachment = self
+	end
+	copy:setParentMesh(self.parentMesh)
+	copy:updateUVs()
+	return copy
 end
 
 return MeshAttachment

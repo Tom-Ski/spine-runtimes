@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #ifdef SPINE_UE4
@@ -53,7 +53,8 @@ const int PathConstraintPositionTimeline::PREV_VALUE = -1;
 const int PathConstraintPositionTimeline::VALUE = 1;
 
 PathConstraintPositionTimeline::PathConstraintPositionTimeline(int frameCount) : CurveTimeline(frameCount),
-																				 _pathConstraintIndex(0) {
+	_pathConstraintIndex(0)
+{
 	_frames.setSize(frameCount * ENTRIES, 0);
 }
 
@@ -61,7 +62,8 @@ PathConstraintPositionTimeline::~PathConstraintPositionTimeline() {
 }
 
 void PathConstraintPositionTimeline::apply(Skeleton &skeleton, float lastTime, float time, Vector<Event *> *pEvents,
-										   float alpha, MixBlend blend, MixDirection direction) {
+	float alpha, MixBlend blend, MixDirection direction
+) {
 	SP_UNUSED(lastTime);
 	SP_UNUSED(pEvents);
 	SP_UNUSED(direction);
@@ -72,14 +74,14 @@ void PathConstraintPositionTimeline::apply(Skeleton &skeleton, float lastTime, f
 
 	if (time < _frames[0]) {
 		switch (blend) {
-			case MixBlend_Setup:
-				constraint._position = constraint._data._position;
-				return;
-			case MixBlend_First:
-				constraint._position += (constraint._data._position - constraint._position) * alpha;
-				return;
-			default:
-				return;
+		case MixBlend_Setup:
+			constraint._position = constraint._data._position;
+			return;
+		case MixBlend_First:
+			constraint._position += (constraint._data._position - constraint._position) * alpha;
+			return;
+		default:
+			return;
 		}
 	}
 
@@ -93,15 +95,14 @@ void PathConstraintPositionTimeline::apply(Skeleton &skeleton, float lastTime, f
 		position = _frames[frame + PREV_VALUE];
 		float frameTime = _frames[frame];
 		float percent = getCurvePercent(frame / ENTRIES - 1,
-										1 - (time - frameTime) / (_frames[frame + PREV_TIME] - frameTime));
+			1 - (time - frameTime) / (_frames[frame + PREV_TIME] - frameTime));
 
 		position += (_frames[frame + VALUE] - position) * percent;
 	}
-	if (blend == MixBlend_Setup) {
+	if (blend == MixBlend_Setup)
 		constraint._position = constraint._data._position + (position - constraint._data._position) * alpha;
-	} else {
+	else
 		constraint._position += (position - constraint._position) * alpha;
-	}
 }
 
 int PathConstraintPositionTimeline::getPropertyId() {

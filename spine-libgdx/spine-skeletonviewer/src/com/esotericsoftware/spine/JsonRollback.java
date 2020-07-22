@@ -1,8 +1,8 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated May 1, 2019. Replaces all prior versions.
+ * Last updated January 1, 2020. Replaces all prior versions.
  *
- * Copyright (c) 2013-2019, Esoteric Software LLC
+ * Copyright (c) 2013-2020, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
@@ -15,16 +15,16 @@
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
  *
- * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
- * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 package com.esotericsoftware.spine;
@@ -115,8 +115,10 @@ public class JsonRollback {
 			JsonValue skins = root.get("skins");
 			if (skins != null && skins.isArray()) {
 				JsonValue newSkins = new JsonValue(ValueType.object);
-				for (JsonValue skinMap = skins.child; skinMap != null; skinMap = skinMap.next)
-					newSkins.addChild(skinMap.getString("name"), skinMap.get("attachments"));
+				for (JsonValue skinMap = skins.child; skinMap != null; skinMap = skinMap.next) {
+					JsonValue attachments = skinMap.get("attachments");
+					if (attachments != null) newSkins.addChild(skinMap.getString("name"), skinMap.get("attachments"));
+				}
 				root.remove("skins");
 				root.addChild("skins", newSkins);
 			}
@@ -135,13 +137,18 @@ public class JsonRollback {
 
 		if (map.isObject() && map.parent.isArray()) { // Probably a key.
 			if (!map.has("time")) map.addChild("time", new JsonValue(0f));
-			if (map.parent.name != null && map.parent.name.equals("rotate") && !map.has("angle"))
-				map.addChild("angle", new JsonValue(0f));
+			if (map.parent.name != null) {
+				if (map.parent.name.equals("rotate") && !map.has("angle"))
+					map.addChild("angle", new JsonValue(0f));
+				else if (map.parent.name.equals("scale")) {
+					if (!map.has("x")) map.addChild("x", new JsonValue(1f));
+					if (!map.has("y")) map.addChild("y", new JsonValue(1f));
+				}
+			}
 		}
 
 		JsonValue curve = map.get("curve");
 		if (curve == null) {
-			if (map.name != null && map.name.equals("color")) System.out.println();
 			for (JsonValue child = map.child; child != null; child = child.next)
 				rollbackCurves(child);
 			return;
@@ -150,8 +157,8 @@ public class JsonRollback {
 			curve.addChild(new JsonValue(curve.asFloat()));
 			curve.setType(ValueType.array);
 			curve.addChild(new JsonValue(map.getFloat("c2", 0)));
-			curve.addChild(new JsonValue(map.getFloat("c3", 0)));
-			curve.addChild(new JsonValue(map.getFloat("c4", 0)));
+			curve.addChild(new JsonValue(map.getFloat("c3", 1)));
+			curve.addChild(new JsonValue(map.getFloat("c4", 1)));
 			map.remove("c2");
 			map.remove("c3");
 			map.remove("c4");

@@ -84,6 +84,7 @@
   * Removed `inheritDeform` field, getter, and setter from `MeshAttachment`.
   * Changed `.skel` binary format, added a string table. References to strings in the data resolve to this string table, reducing storage size of binary files considerably.
   * Changed the `.json` and `.skel` file formats to accomodate the new feature and file size optimiations. Old projects must be exported with Spine 3.8.20+ to be compatible with the 3.8 Spine runtimes.
+  * Switched projects from FDT to Visual Studio Code. See updated `README.md` files for instructions.
 
 * **Additions**
   * Added `SkeletonBinary` to load binary `.skel` files. See `MixAndMatchExample.as` in `spine-startling-example`.
@@ -101,6 +102,7 @@
 
 ### Starling
 * Added `MixAndMatchExample.as` to demonstrate the new Skin API additions and how to load binary `.skel` files.
+* Switched projects from FDT to Visual Studio Code. See updated `README.md` files for instructions.
 
 ## C
 * **Breaking changes**
@@ -128,9 +130,12 @@
 
 ### Cocos2d-Objc
 * Added mix-and-match example to demonstrate the new Skin API.
+* Added `IKExample`.
+* Added `SkeletonAnimation preUpdateWorldTransformsListener` and `SkeletonAnimation postUpdateWorldTransformsListener`. When set, these callbacks will be invokved before and after the skeleton's `updateWorldTransforms()` method is called. See the `IKExample` how it can be used.
 
 ### SFML
 * Added mix-and-match example to demonstrate the new Skin API.
+* Added `IKExample`.
 
 ## C++
 * **Breaking Changes**
@@ -157,10 +162,14 @@
   * Added `Attachment#copy()` to all attachment type implementations. This lets you deep copy an attachment to modify it independently from the original, i.e. when programmatically changing texture coordinates or mesh vertices.
   * Added `MeshAttachment#newLinkedMesh()`, creates a linked mesh linkted to either the original mesh, or the parent of the original mesh.
   * Added IK softness.
+  * Exposed `x` and `y` on `SkeletonData` through getters and setters.
 
 ### Cocos2d-x
 * Updated to cocos2d-x 3.17.1
 * Added mix-and-match example to demonstrate the new Skin API.
+* Exmaple project requires Visual Studio 2019 on Windows
+* Added `IKExample`.
+* Added `SkeletonAnimation::setPreUpdateWorldTransformsListener()` and `SkeletonAnimation::setPreUpdateWorldTransformsListener()`. When set, these callbacks will be invokved before and after the skeleton's `updateWorldTransforms()` method is called. See the `IKExample` how it can be used.
 
 ### SFML
 * Added mix-and-match example to demonstrate the new Skin API.
@@ -176,6 +185,7 @@
 * Removed dependency on `RHI`, `RenderCore`, and `ShaderCore`.
 * Re-importing atlases and their textures now works consistently in all situations.
 * Added mix-and-match example to demonstrate the new Skin API.
+* Materials on `SkeletonRendererComponent` are now blueprint read and writeable. This allows setting dynamic material instances at runtime
 
 ## C# ##
 * **Breaking changes**
@@ -183,6 +193,7 @@
   * Renamed `Slot.AttachmentVertices` to `Slot.Deform`.
   * Changed the `.json` curve format and added more assumptions for omitted values, reducing the average size of JSON exports.
   * Renamed `Skin.AddAttachment()` to `Skin.SetAttachment()`.
+  * Removed `FindAttachmentsForSlot(int slotIndex, List<Attachment> attachments)` and `FindNamesForSlot (int slotIndex, List<string> names)` and replaced it with `Skin.GetAttachments(int slotIndex, List<SkinEntry> attachments)` which returns the combined `SkinEntry` object holding both name and attachment.
   * Removed `VertexAttachment.ApplyDeform()` and replaced it with `VertexAttachment.DeformAttachment`. The attachment set on this field is used to decide if a `DeformTimeline` should be applied to the attachment active on the slot to which the timeline is applied.
   * Removed `inheritDeform` field, getter, and setter from `MeshAttachment`.
   * Changed `.skel` binary format, added a string table. References to strings in the data resolve to this string table, reducing storage size of binary files considerably.
@@ -194,7 +205,7 @@
   * Added skin-specific bones and constraints which are only updated if the skeleton's current skin contains them.
   * Improved Skin API to make it easier to handle mix-and-match use cases.
     * Added `Skin.GetAttachments()`. Returns all attachments in the skin.
-    * Added `Skin.GetAttachments(int slotIndex, List<SkinEntry> attachments)`. Returns all attachements in the skin for the given slot index.
+    * Added `Skin.GetAttachments(int slotIndex, List<SkinEntry> attachments)`. Returns all attachements in the skin for the given slot index. This method replaces `FindAttachmentsForSlot` and `FindNamesForSlot`.
     * Added `Skin.AddSkin(Skin skin)`. Adds all attachments, bones, and skins from the specified skin to this skin.
     * Added `Skin.CopySkin(Skin skin)`. Adds all attachments, bones, and skins from the specified skin to this skin. `VertexAttachment` are shallowly copied and will retain any parent mesh relationship. All other attachment types are deep copied.
   * Added `Attachment.Copy()` to all attachment type implementations. This lets you deep copy an attachment to modify it independently from the original, i.e. when programmatically changing texture coordinates or mesh vertices.
@@ -204,12 +215,13 @@
 ### Unity
 
 * **Breaking changes**
-  * **Officially supported Unity versions are 2017.1-2019.1**.
+  * **Officially supported Unity versions are 2017.1-2019.2**.
   * **Spine `.asmdef` files are again active by default**. They have previously been deactivated to `.txt` extension which is now no longer necessary.
   * **Removed PoseSkeleton() and PoseWithAnimation()** extension methods to prevent issues where animations are not mixed out. Problem was that these methods did not set AnimationState, leaving incorrect state at e.g. attachments enabled at slots when starting subsequent animations. As a replacement you can use `AnimationState.ClearTrack(0);` followed by `var entry = AnimationState.SetAnimation(0, animation, loop); entry.TrackTime = time` to achieve similar behaviour.
   * **The `Shadow alpha cutoff` shader parameter is now respecting slot-color alpha** values at all Spine shaders. A fragment's texture color alpha is multiplied with slot-color alpha before the result is tested against the `Shadow alpha cutoff` threshold.
   * **Removed redundant `Attachment.GetClone()` and `MeshAttachment.GetLinkedClone()` extension methods**. Use methods `Attachment.Copy` and `MeshAttachment.NewLinkedMesh()` instead.
   * **Renamed extension method `Attachment.GetClone(bool cloneMeshesAsLinked)` to `Attachment.GetCopy(bool cloneMeshesAsLinked)`** to follow the naming scheme of the Spine API.
+  * `SkeletonDataAsset.atlasAssets` is now an array of the base class `AtlasAssetBase` instead of `SpineAtlasAsset`, which provides `IEnumerable<> Materials` instead of `List<> materials`. Replace any access via `atlasAsset.materials[0]` with `atlasAsset.Materials.First()` and add a `using System.Linq;` statement.
   * **Changed `MeshAttachment.GetLinkedMesh()` method signatures:** removed optional parameters `bool inheritDeform = true, bool copyOriginalProperties = false`.
   * Changed namespace `Spine.Unity.Modules` to `Spine.Unity` and `Spine.Unity.Examples` after restructuring (see section below) in respective classes:
     * When receiving namespace related errors, replace using statements of `using Spine.Unity.Modules.AttachmentTools;` with `using Spine.Unity.AttachmentTools;`. You can remove `using Spine.Unity.Modules;` statements when a `using Spine.Unity` statement is already present in the file.
@@ -224,6 +236,7 @@
       a) the `Packages` directory in your project where it will automatically be loaded, or
       b) to an arbitrary directory outside the Assets directory and then open Package Manager in Unity, select the `+` icon, choose `Add package from disk..` and point it to the package.json file.
       The Project panel should now show an entry `Spine Timeline Extensions` under `Packages`. If the directory is not yet listed, you will need to close and re-open Unity to have it display the directory and its contents.
+  * `SkeletonMecanim`'s `Layer Mix Mode` enum name `MixMode.SpineStyle` has been renamed to `MixMode.Hard`. This is most likely not set via code and thus unlikely to be a problem. Serialized scenes and prefabs are unaffected.
 
 * **Additions**
   * **Spine Preferences stored in Assets/Editor/SpineSettings.asset** Now Spine uses the new `SettingsProvider` API, storing settings in a SpineSettings.asset file which can be shared with team members. Your old preferences are automatically migrated to the new system.
@@ -239,14 +252,65 @@
 
       The Project panel should now show an entry `Spine Lightweight RP Shaders` under `Packages`. If the directory is not yet listed, you will need to close and re-open Unity to have it display the directory and its contents.
     * **Usage:** The package provides two shaders specifically built for the lightweight render pipeline:
+      * `Lightweight Render Pipeline/Spine/Skeleton`, as a lightweight variant of the `Spine/Skeleton` shader,
       * `Lightweight Render Pipeline/Spine/Skeleton Lit`, as a lightweight variant of the `Spine/Skeleton Lit` shader and
       * `Lightweight Render Pipeline/Spine/Sprite`, as a lightweight variant of the `Spine/Sprite/Vertex Lit` and `Pixel Lit` shaders, which were not functioning in the lightweight render pipeline. The shaders can be assigned to materials as usual and will respect your settings of the assigned `LightweightRenderPipelineAsset` under `Project Settings - Graphics`.
     * **Restrictions** As all Spine shaders, the LWRP shaders **do not support `Premultiply alpha` (PMA) atlas textures in Linear color space**. Please export your atlas textures as `straight alpha` textures with disabled `Premultiply alpha` setting when using Linear color space. You can check the current color space via `Project Settings - Player - Other Settings - Color Space.`.
     * **Example:** You can find an example scene in the package under `com.esotericsoftware.spine.lwrp-shaders-3.8/Examples/LWRP Shaders.unity` that demonstrates usage of the LWRP shaders.
   * Added `Spine/Skeleton Lit ZWrite` shader. This variant of the `Spine/Skeleton Lit` shader writes to the depth buffer with configurable depth alpha threshold. Apart from that it is identical to `Spine/Skeleton Lit`.
+  * Additional yield instructions to wait for animation track events `End`, `Complete` and `Interrupt`.
+    * `WaitForSpineAnimationComplete` now proves an additional `bool includeEndEvent` parameter, defaults to `false` (previous behaviour).
+    * Added a new `WaitForSpineAnimationEnd` yield instruction.
+    * Added a new generic `WaitForSpineAnimation` yield instruction which can be configured to wait for any combination of animation track events. It is now used as base class for `WaitForSpineAnimationComplete` and `WaitForSpineAnimationEnd`.
+  * Additional **Fix Draw Order** parameter at SkeletonRenderer, defaults to `disabled` (previous behaviour).
+    Applies only when 3+ submeshes are used (2+ materials with alternating order, e.g. "A B A").
+		If true, MaterialPropertyBlocks are assigned at each material to prevent aggressive batching of submeshes
+		by e.g. the LWRP renderer, leading to incorrect draw order (e.g. "A1 B A2" changed to "A1A2 B").
+		You can leave this parameter disabled when everything is drawn correctly to save the additional performance cost.
+  * **Additional Timeline features.** SpineAnimationStateClip now provides a `Speed Multiplier`, a start time offset parameter `Clip In`, support for blending successive animations by overlapping tracks. An additional `Use Blend Duration` parameter *(defaults to true)* allows for automatic synchronisation of MixDuration with the current overlap blend duration. An additional Spine preferences parameter `Use Blend Duration` has been added which can be disabled to default to the previous behaviour before this update.
+  * Additional `SpriteMask and RectMask2D` example scene added for demonstration of mask setup and interaction.
+  * `Real physics hinge chains` for both 2D and 3D physics. The [SkeletonUtilityBone](http://esotericsoftware.com/spine-unity#SkeletonUtilityBone) Inspector provides an interface to create 2D and 3D hinge chains. Previously created chains have only been respecting gravity, but not momentum of the skeleton or parent bones. The new physics rig created when pressing `Create 3D Hinge Chain` and `Create 2D Hinge Chain` creates a more complex setup that also works when flipping the skeleton. Note that the chain root node is no longer parented to bones of the skeleton. This is a requirement in Unity to have momentum applied properly - do not reparent the chain root to bones of your skeleton, or you will loose any momentum applied by the skeleton's movement.
+  * `Outline rendering functionality for all shaders.` Every shader now provides an additional set of `Outline` parameters to enable custom outline rendering. When outline rendering is enabled via the `Material` inspector, it automatically switches the shader to the respective `Spine/Outline` shader variant. Outlines are generated by sampling neighbour pixels, so be sure to add enough transparent padding when exporting your atlas textures to fit the desired outline width. In order to enable outline rendering at a skeleton, it is recommended to first prepare an additional outline material copy and then switch the material of the target skeleton to this material. This prevents unnecessary additional runtime material copies and drawcalls. Material switching can be prepared via a [SkeletonRendererCustomMaterials](http://esotericsoftware.com/spine-unity#SkeletonRendererCustomMaterials) component and then enabled or disabled at runtime. Alternatively, you can also directly modify the `SkeletonRenderer.CustomMaterialOverride` property.
+  Outline rendering is fully supported on `SkeletonGraphic` shaders as well.
+  * Added `SkeletonRenderer.EditorSkipSkinSync` scripting API property to be able to set custom skins in editor scripts. Enable this property when overwriting the Skeleton's skin from an editor script. Without setting this parameter, changes will be overwritten by the next inspector update. Only affects Inspector synchronisation of skin with `initialSkinName`, not startup initialization.
+  * All `Spine/SkeletonGraphic` shaders now provide a parameter `CanvasGroup Compatible` which can be enabled to support `CanvasGroup` alpha blending. For correct results, you should then disable `Pma Vertex Colors` in the `SkeletonGraphic` Inspector, in section `Advanced` (otherwise Slot alpha will be applied twice).
+  * **Now supporting Universal Render Pipeline (URP), including the 2D Renderer pipeline, through an additional UPM package.**
+    * **Installation:** You can download the Unity Package Manager (UPM) package via the [download page](http://esotericsoftware.com/spine-unity-download) or find it in the [spine-runtimes/spine-unity/Modules](https://github.com/EsotericSoftware/spine-runtimes/tree/3.8-beta/spine-unity/Modules) subdirectory on the git repository. You can then either unzip (copy if using git) the package to
+      * a) the `Packages` directory in your project where it will automatically be loaded, or
+      * b) to an arbitrary directory outside the Assets directory and then open Package Manager in Unity, select the `+` icon, choose `Add package from disk..` and point it to the package.json file.
+
+      The Project panel should now show an entry `Spine Universal RP Shaders` under `Packages`. If the directory is not yet listed, you will need to close and re-open Unity to have it display the directory and its contents.
+    * **Usage:** The package provides two shaders specifically built for the universal render pipeline:
+      * `Universal Render Pipeline/Spine/Skeleton`, as a universal variant of the `Spine/Skeleton` shader,
+      * `Universal Render Pipeline/Spine/Skeleton Lit`, as a universal variant of the `Spine/Skeleton Lit` shader,
+      * `Universal Render Pipeline/Spine/Sprite`, as a universal variant of the `Spine/Sprite/Vertex Lit` and `Pixel Lit` shaders, which were not functioning in the universal render pipeline,
+	  * `Universal Render Pipeline/2D/Spine/Skeleton Lit`, as a universal 2D Renderer variant of the `Spine/Skeleton Lit` shader, and
+      * `Universal Render Pipeline/2D/Spine/Sprite`, as a universal 2D Renderer variant of the `Spine/Sprite/Vertex Lit` and `Pixel Lit` shaders.
+	  The shaders can be assigned to materials as usual and will respect your settings of the assigned `UniversalRenderPipelineAsset` under `Project Settings - Graphics`.
+    * **Restrictions** As all Spine shaders, the URP shaders **do not support `Premultiply alpha` (PMA) atlas textures in Linear color space**. Please export your atlas textures as `straight alpha` textures with disabled `Premultiply alpha` setting when using Linear color space. You can check the current color space via `Project Settings - Player - Other Settings - Color Space.`.
+    * **Example:** You can find an example scene in the package under `com.esotericsoftware.spine.urp-shaders-3.8/Examples/URP Shaders.unity` that demonstrates usage of the URP shaders.
+  * Spine Preferences now provide an **`Atlas Texture Settings`** parameter for applying customizable texture import settings at all newly imported Spine atlas textures.
+    When exporting atlas textures from Spine with `Premultiply alpha` enabled (the default), you can leave it at `PMATexturePreset`. If you have disabled `Premultiply alpha`, set it to the included `StraightAlphaTexturePreset` asset. You can also create your own `TextureImporter` `Preset` asset and assign it here (include `PMA` or `Straight` in the name). In Unity versions before 2018.3 you can use `Texture2D` template assets instead of the newer `Preset` assets. Materials created for imported textures will also have the `Straight Alpha Texture` parameter configured accordingly.
+  * All `Sprite` shaders (including URP and LWRP extension packages) now provide an additional `Fixed Normal Space` option `World-Space`. PReviously options were limited to `View-Space` and `Model-Space`.
+  * `SkeletonGraphic` now fully supports [`SkeletonUtility`](http://esotericsoftware.com/spine-unity#SkeletonUtility) for generating a hierarchy of [`SkeletonUtilityBones`](http://esotericsoftware.com/spine-unity#SkeletonUtilityBone) in both modes `Follow` and `Override`. This also enables creating hinge chain physics rigs and using `SkeletonUtilityConstraints` such as `SkeletonUtilityGroundConstraint` and `SkeletonUtilityEyeConstraint` on `SkeletonGraphic`.
+  * Added `OnMeshAndMaterialsUpdated` callback event to `SkeletonRenderer` and `SkeletonGraphic`. It is issued at the end of `LateUpdate`, before rendering.
+  * Added `Skeleton-OutlineOnly` single pass shader to LWRP and URP extension modules. It can be assigned to materials as `Universal Render Pipeline/Spine/Outline/Skeleton-OutlineOnly`. This allows for separate outline child *GameObjects* that reference the existing Mesh of their parent, and re-draw the mesh using this outline shader.
+  * Added example component `RenderExistingMesh` to render a mesh again with different materials, as required by the new `Skeleton-OutlineOnly` shaders.
+  In URP the outline has to be rendered via a separate GameObject as URP does not allow multiple render passes. To add an outline to your SkeletenRenderer:
+    1) Add a child GameObject and move it a bit back (e.g. position Z = 0.01).
+    2) Add a `RenderExistingMesh` component, provided in the `Spine Examples/Scripts/Sample Components` directory.
+    3) Copy the original material, add *_Outline* to its name and set the shader to `Universal Render Pipeline/Spine/Outline/Skeleton-OutlineOnly`.
+    4) Assign this *_Outline* material at the `RenderExistingMesh` component under *Replacement Materials*.
+  * Added `Outline Shaders URP` example scene to URP extension module to demonstrate the above additions.
+  * Added support for Unity's [`SpriteAtlas`](https://docs.unity3d.com/Manual/class-SpriteAtlas.html) as atlas provider (as an alternative to `.atlas.txt` and `.png` files) alongside a skeleton data file. There is now an additional `Spine SpriteAtlas Import` tool window accessible via `Window - Spine - SpriteAtlas Import`. Additional information can be found in a new section on the [spine-unity documentation page](http://esotericsoftware.com/spine-unity#Advanced---Using-Unity-SpriteAtlas-as-Atlas-Provider).
+  * Added support for **multiple atlas textures at `SkeletonGraphic`**. You can enable this feature by enabling the parameter `Multiple CanvasRenders` in the `Advanced` section of the `SkeletonGraphic` Inspector. This automatically creates the required number of child `CanvasRenderer` GameObjects for each required draw call (submesh).
+  * Added support for **Render Separator Slots** at `SkeletonGraphic`. Render separation can be enabled directly in the `Advanced` section of the `SkeletonGraphic` Inspector, it does not require any additional components (like `SkeletonRenderSeparator` or `SkeletonPartsRenderer` for `SkeletonRenderer` components). When enabled, additional separator GameObjects will be created automatically for each separation part, and `CanvasRenderer` GameObjects re-parented to them accordingly. The separator GameObjects can be moved around and re-parented in the hierarchy according to your requirements to achieve the desired draw order within your `Canvas`. A usage example can be found in the updated `Spine Examples/Other Examples/SkeletonRenderSeparator` scene.
+  * Added `SkeletonGraphicCustomMaterials` component, providing functionality to override materials and textures of a `SkeletonGraphic`, similar to `SkeletonRendererCustomMaterials`. Note: overriding materials or textures per slot is not provided due to structural limitations.
+  * Added **Root Motion support** for `SkeletonAnimation`, `SkeletonMecanim` and `SkeletonGraphic` via new components `SkeletonRootMotion` and `SkeletonMecanimRootMotion`. The `SkeletonAnimation` and `SkeletonGraphic` component Inspector now provides a line `Root Motion` with `Add Component` and `Remove Component` buttons to add/remove the new `SkeletonRootMotion` component to your GameObject. The `SkeletonMecanim` Inspector detects whether root motion is enabled at the `Animator` component and adds a `SkeletonMecanimRootMotion` component automatically.
+  * `SkeletonMecanim` now provides an additional `Custom MixMode` parameter under `Mecanim Translator`. It is enabled by default in version 3.8 to maintain current behaviour, using the set `Mix Mode` for each Mecanim layer. When disabled, `SkeletonMecanim` will use the recommended `MixMode` according to the layer blend mode. Additional information can be found in the [Mecanim Translator section](http://esotericsoftware.com/spine-unity#Parameters-for-animation-blending-control) on the spine-unity documentation pages.
 
 * **Changes of default values**
-  * `SkeletonMecanim`'s `Layer Mix Mode` now defaults to `MixMode.SpineStyle` instead of `MixMode.MixAlways`.
+  * `SkeletonMecanim`'s `Layer Mix Mode` now defaults to `MixMode.MixNext` instead of `MixMode.MixAlways`.
   * `BlendModeMaterialAsset` and it's instance `Default BlendModeMaterials.asset` now have `Apply Additive Material` set to `true` by default in order to apply all blend modes by default.
 
 * **Deprecated**
@@ -281,6 +345,7 @@
 * Updated to latest MonoGame version 3.7.1
 * Rewrote example project to be cleaner and better demonstrate basic Spine features.
 * Added mix-and-match example to demonstrate the new Skin API.
+* Added normalmap support via `SpineEffectNormalmap` and support for loading multiple texture layers following a suffix-pattern. Please see the example code on how to use them.
 
 ## Java
 * **Breaking changes**
@@ -349,6 +414,7 @@
   * Removed `inheritDeform` field, getter, and setter from `MeshAttachment`.
   * Changed `.skel` binary format, added a string table. References to strings in the data resolve to this string table, reducing storage size of binary files considerably.
   * Changed the `.json` and `.skel` file formats to accomodate the new feature and file size optimiations. Old projects must be exported with Spine 3.8.20+ to be compatible with the 3.8 Spine runtimes.
+  * Updated runtime to be compatible with TypeScript 3.6.3.
 
 * **Additions**
   * Added support for loading binary data via `AssetManager#loadBinary()`. `AssetManager#get()` will return a `Uint8Array` for such assets.
@@ -364,6 +430,7 @@
   * Added `Attachment#copy()` to all attachment type implementations. This lets you deep copy an attachment to modify it independently from the original, i.e. when programmatically changing texture coordinates or mesh vertices.
   * Added `MeshAttachment#newLinkedMesh()`, creates a linked mesh linkted to either the original mesh, or the parent of the original mesh.
   * Added IK softness.
+  * Added `AssetManager.setRawDataURI(path, data)`. Allows to embed data URIs for skeletons, atlases and atlas page images directly in the HTML/JS without needing to load it from a separate file.
 
 ### WebGL backend
 * `Input` can now take a partially defined implementation of `InputListener`.
@@ -372,10 +439,12 @@
 ### Canvas backend
 
 ### Three.js backend
+* `SkeletonMesh` now takes an optional `SkeletonMeshMaterialParametersCustomizer` function that allows you to modify the `ShaderMaterialParameters` before the material is finalized. Use it to modify things like THREEJS' `Material.depthTest` etc. See #1590.
 
 ### Player
 * `SpinePlayer#setAnimation()` can now be called directly to set the animation being displayed.
 * The player supports loading `.skel` binary skeleton files by setting the `SpinePlayerConfig#skelUrl` field instead of `SpinePlayerConfig#jsonUrl`.
+* Added `SpinePlayerConfig#rawDataURIs`. Allows to embed data URIs for skeletons, atlases and atlas page images directly in the HTML/JS without needing to load it from a separate file. See the example for a demonstration.
 
 # 3.7
 
@@ -603,6 +672,7 @@ This will automatically:
   * Support for stretchy IK
   * Support for audio events, see `audioPath`, `volume` and `balance` fields on event (data).
   * `TrackEntry` has an additional field called `holdPrevious`. It can be used to counter act a limitation of `AnimationState` resulting in "dipping" of parts of the animation. For a full discussion of the problem and the solution we've implemented, see this [forum thread](http://esotericsoftware.com/forum/Probably-Easy-Animation-mixing-with-multiple-tracks-10682?p=48130&hilit=holdprevious#p48130).
+  * Added `AssetManager#setRawDataURI(path, data)`. Allows to set raw data URIs for a specific path, which in turn enables embedding assets into JavaScript/HTML.
 
 ### WebGL backend
 * Added `VertexEffect` interface, instances of which can be set on `SkeletonRenderer`. Allows to modify vertices before submitting them to GPU. See `SwirlEffect`, `JitterEffect`, and the example which allows to set effects.
